@@ -69,13 +69,19 @@ class LeadConnector_Admin
         error_log("called_setting_saved");
         error_log(print_r($input, true));
 
-        $api_key = $input[lead_connector_constants\lc_options_api_key];
 
         $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
+        $api_key = isset($input[lead_connector_constants\lc_options_api_key]) ? $input[lead_connector_constants\lc_options_api_key] : null;
+        
+        if(!$api_key)
+            $api_key = isset($options[lead_connector_constants\lc_options_api_key]) ? $options[lead_connector_constants\lc_options_api_key] : null ;
+
         $old_api_key = '';
         $old_location_id = '';
         $old_text_widget_error = "0";
 
+
+        // die('reached 1.1');
         if (isset($options[lead_connector_constants\lc_options_api_key])) {
             $old_api_key = esc_attr($options[lead_connector_constants\lc_options_api_key]);
         }
@@ -88,10 +94,13 @@ class LeadConnector_Admin
             $old_text_widget_error = esc_attr($options[lead_connector_constants\lc_options_text_widget_error]);
         }
 
-        if (!isset($api_key) || (isset($api_key) === true && $api_key === '')) {
-            $input[lead_connector_constants\lc_options_text_widget_error] = "1";
-            return $input;
-        }
+        // if (!isset($api_key) || (isset($api_key) === true && $api_key === '')) {
+        //     $input[lead_connector_constants\lc_options_text_widget_error] = "1";
+
+            // die('reached 1.2');
+
+        //     return $input;
+        // }
         $input[lead_connector_constants\lc_options_text_widget_warning_text] = "";
         $api_key = trim($api_key);
 
@@ -100,28 +109,32 @@ class LeadConnector_Admin
             $enabled_text_widget = esc_attr($input[lead_connector_constants\lc_options_enable_text_widget]);
         }
 
+        // die('reached 1.3');
+
+
         if (defined('WP_DEBUG') && true === WP_DEBUG) {
             error_log(print_r($input, true));
         }
 
         if ($enabled_text_widget == 1 || $forced_save) {
+
+            // die('reached 1.4');
+
             if (defined('WP_DEBUG') && true === WP_DEBUG) {
                 error_log('call API here ');
             }
-            //call API here
-            $args = array(
-                'timeout' => 60,
-                'headers' => array(
-                    'Authorization' => 'Bearer ' . $api_key,
-                ),
-            );
-            $response = wp_remote_get(LEAD_CONNECTOR_BASE_URL . 'v1/locations/me?includeWhiteLabelUrl=true', $args);
-            $http_code = wp_remote_retrieve_response_code($response);
-            if ($http_code === 200) {
-                $body = wp_remote_retrieve_body($response);
-                $obj = json_decode($body, false);
+
+            $lcChatResponse = $this->lc_wp_get('get_chat_widget');
+
+
+            if (@!$lcChatResponse->error) {
+
+                $obj = $lcChatResponse;
+
                 $input[lead_connector_constants\lc_options_location_id] = $obj->id;
                 $input[lead_connector_constants\lc_options_text_widget_error] = 0;
+
+
                 if (isset($obj->settings) && isset($obj->settings->textwidget) && count((array) $obj->settings->textwidget) > 0) {
                     $input[lead_connector_constants\lc_options_text_widget_settings] = wp_json_encode($obj->settings->textwidget, JSON_UNESCAPED_UNICODE);
                 } else {
@@ -144,14 +157,14 @@ class LeadConnector_Admin
                     $input[lead_connector_constants\lc_options_location_white_label_url] = "";
                 }
                 if (defined('WP_DEBUG') && true === WP_DEBUG) {
-                    error_log(print_r($body, true));
+                    error_log(print_r($lcChatResponse, true));
                     error_log(print_r($obj, true));
                 }
             } else {
                 error_log('Please provide correct API key, error details below');
-                error_log(print_r($response, true));
+                error_log(print_r($lcChatResponse, true));
                 $input[lead_connector_constants\lc_options_text_widget_error] = "1";
-                $input[lead_connector_constants\lc_options_text_widget_error_details] = print_r($response, true);
+                $input[lead_connector_constants\lc_options_text_widget_error_details] = print_r($lcChatResponse, true);
             }
         } else {
             $input[lead_connector_constants\lc_options_location_id] = $old_location_id;
@@ -210,6 +223,18 @@ class LeadConnector_Admin
         return $data;
     }
 
+    public function lc_disconnect(){
+        $newOptions[lead_connector_constants\lc_options_oauth_access_token] = "";
+        $newOptions[lead_connector_constants\lc_options_oauth_refresh_token] = "";
+        $newOptions[lead_connector_constants\lc_options_location_id] = "lc_disconnect";
+
+        $option_saved = update_option(LEAD_CONNECTOR_OPTION_NAME, $newOptions);
+        return array(
+            "-success" => true,
+            "options_saved" => $option_saved,
+        );
+    }
+
     /**
      * Public API handler
      * rest API call from front-end will end up here, where endpoint query param will the action or remote API path.
@@ -223,10 +248,109 @@ class LeadConnector_Admin
         $endpoint = $params[lead_connector_constants\lc_rest_api_endpoint_param];
         $directEndpoint = $params[lead_connector_constants\lc_rest_api_direct_endpoint_param];
 
+        $lc_access_token = "";
         $api_key = "";
+        $authorized_location_id = "";
+
+        if (isset($options[lead_connector_constants\lc_options_location_id])) {
+            $authorized_location_id = $options[lead_connector_constants\lc_options_location_id];
+            $authorized_location_id = trim($authorized_location_id);
+        }
+
         if (isset($options[lead_connector_constants\lc_options_api_key])) {
             $api_key = $options[lead_connector_constants\lc_options_api_key];
             $api_key = trim($api_key);
+        }
+
+        if (isset($options[lead_connector_constants\lc_options_oauth_access_token])) {
+            $lc_access_token = $options[lead_connector_constants\lc_options_oauth_access_token];
+            $lc_access_token = $this->lc_decrypt_string($lc_access_token);
+        }
+
+        if($endpoint == 'wp_regenerate_token'){
+            return $this->lc_oauth_regenerate_token();
+        }
+
+        if($endpoint == "wp_validate_auth_state"){
+
+
+            // This should for both api key or oauth 
+            $has_connected_auth = false ;
+            $connection_method = '';
+
+            $funnelFetchResponse = array('error' => true); ;
+
+            if($lc_access_token != '' || $api_key != ''){
+                $has_connected_auth = true;
+            }
+             
+            if($has_connected_auth){
+                if($lc_access_token != ''){
+                    $connection_method = 'oauth';
+                }else{
+                    $connection_method = 'api_key';
+    }
+
+                $funnelFetchResponse =  $this->lc_wp_get('funnels_get_list');
+
+            }
+            $funnelFetchResponse = (array) $funnelFetchResponse ;
+
+            $is_connection_status_active = false;
+            if(!array_key_exists("error", $funnelFetchResponse ))
+            {
+                $is_connection_status_active = true;
+            }
+
+            return array(
+                "is_connection_status_active" => $is_connection_status_active,
+                "has_connected_auth" => $has_connected_auth,
+                "connection_method" => $connection_method ,
+                "access_token" => $lc_access_token, 
+                "api_key" => $api_key,
+                "authorized_location_id" => $authorized_location_id,
+                "options" => $options,
+                "funnelFetchResponse" => $funnelFetchResponse
+            );
+        }
+
+        if ($endpoint == 'wp_disconnect') {
+            $newOptions[lead_connector_constants\lc_options_oauth_access_token] = "";
+            $newOptions[lead_connector_constants\lc_options_oauth_refresh_token] = "";
+            $newOptions[lead_connector_constants\lc_options_location_id] = "wp_disconnect";
+
+            $option_saved = update_option(LEAD_CONNECTOR_OPTION_NAME, $newOptions);
+        
+            return array(
+                "-success" => true,
+                "options_saved" => $option_saved,
+            );
+        }
+
+        if ($endpoint == 'wp_validate_oauth') {
+
+            $body = json_decode($params['data']);
+            $token_response = $this->lc_perform_oauth_request("validate", $body->code);
+            $previous_options = get_option(LEAD_CONNECTOR_OPTION_NAME);
+            $option_saved = false;
+
+            if (!property_exists($token_response, "error")) {
+                $previous_options[lead_connector_constants\lc_options_oauth_access_token] = $this->lc_encrypt_string($token_response->access_token);
+                $previous_options[lead_connector_constants\lc_options_oauth_refresh_token] = $this->lc_encrypt_string($token_response->refresh_token);
+                if ($token_response->userType == 'Location') {
+                    $previous_options[lead_connector_constants\lc_options_location_id] = $token_response->locationId;
+                }
+
+
+                $option_saved = update_option(LEAD_CONNECTOR_OPTION_NAME, $previous_options);
+            }
+
+
+            return array(
+                "previous_options" => $previous_options,
+                "options_saved" => $option_saved,
+                "response" => $token_response,
+            );
         }
 
         if ($request->get_method() == 'POST') {
@@ -455,24 +579,47 @@ class LeadConnector_Admin
         }
 
         if ($endpoint == "wp_get_all_posts") {
+
+            $body = json_decode( $params['data']);
+
+            $perPage = $body->per_page;
+            $page = $body->page;
+
             $query_args = array(
                 'post_type' => lead_connector_constants\lc_custom_post_type,
                 'post_status' => 'any',
                 'compare' => '=',
-                "numberposts" => -1,
+                "posts_per_page" => $perPage,
+                "paged" => $page
             );
 
-            $the_posts = get_posts($query_args);
+            $the_posts = new WP_Query($query_args);
 
             $templates = [];
             $location_id = "";
             if (isset($options[lead_connector_constants\lc_options_location_id])) {
                 $location_id = esc_attr($options[lead_connector_constants\lc_options_location_id]);
             }
-            foreach ($the_posts as $post) {
-                $templates[] = $this->get_item($post->ID, $location_id);
-            }
-            return ($templates);
+
+            if ($the_posts->have_posts()) :
+                while ($the_posts->have_posts()) :
+                    $the_posts->the_post();
+                    $templates[] = $this->get_item(get_the_ID(), $location_id);
+                endwhile;
+            endif;
+         
+
+            $finalOutput = array(
+                "funnels" => $templates,
+                "pagination" => [
+                    "total" => count($templates),
+                    "page" => $page,
+                    "per_page" => $perPage,
+                    "total_pages" => $the_posts->max_num_pages,
+                ],
+            );
+
+            return $finalOutput;
         }
 
         if ($endpoint == "wp_get_lc_options") {
@@ -483,6 +630,7 @@ class LeadConnector_Admin
             $warning_msg = "";
             $white_label_url = "";
             $location_id = "";
+            $oauth_access_token = "";
 
             if (isset($options[lead_connector_constants\lc_options_text_widget_error])) {
                 $text_widget_error = esc_attr($options[lead_connector_constants\lc_options_text_widget_error]);
@@ -503,8 +651,12 @@ class LeadConnector_Admin
                 $location_id = (esc_attr($options[lead_connector_constants\lc_options_location_id]));
             }
 
+            if (isset($options[lead_connector_constants\lc_options_oauth_access_token])) {
+                $oauth_access_token = (esc_attr($options[lead_connector_constants\lc_options_oauth_access_token]));
+            }
             $data = [
                 'api_key' => $api_key,
+                "oauth_access_token" => $oauth_access_token,
                 "enable_text_widget" => $enabled_text_widget,
                 "text_widget_error" => $text_widget_error == "1" ? true : false,
                 "error_details" => $error_details,
@@ -512,6 +664,8 @@ class LeadConnector_Admin
                 "home_url" => get_home_url(),
                 "white_label_url" => $white_label_url,
                 "location_id" => $location_id,
+                "plugin_directory_url" => plugin_dir_url(dirname(__FILE__)),
+                "all_options" => $options
             ];
 
             return $data;
@@ -550,8 +704,348 @@ class LeadConnector_Admin
             }
         }
 
-        //else call Remote API here
+
+        if($endpoint == 'funnels_get_list'){
+            return $this->lc_wp_get($endpoint);
+        }
+
+        if($endpoint == 'funnels_get_details'){
+            $body = json_decode($params['data']);
+            return $this->lc_wp_get($endpoint, $body);
+        }
+
+        if($endpoint == 'wp_enable_email'){
+            $body = json_decode($params['data']);
+            $response = $this->lc_wp_get($endpoint, $body);
+            $option_saved = false ;
+            if(@!$response->error){
+
+                $newOptions = get_option(LEAD_CONNECTOR_OPTION_NAME);
+
+
+                $newOptions[lead_connector_constants\lc_options_email_smtp_enabled] = 'true';
+                $newOptions[lead_connector_constants\lc_options_email_smtp_email] = $response->smtpEmail;
+                $newOptions[lead_connector_constants\lc_options_email_smtp_password] = $response->smtpPassword;
+                $newOptions[lead_connector_constants\lc_options_email_smtp_port] = $response->smtpPort;
+                $newOptions[lead_connector_constants\lc_options_email_smtp_server] = $response->smtpServer;
+                $newOptions[lead_connector_constants\lc_options_email_smtp_provider] = $response->smtpProviderName;
+
+                $option_saved = update_option(LEAD_CONNECTOR_OPTION_NAME, $newOptions);
+                $option_saved = true;
+
+            }else {
+                if($response->http_code == 400 && $response->error){
+                    $errorBody = json_decode($response->body);
+                    if($errorBody->message){
+                        return array(
+                            'success' => false,
+                            'message' => $errorBody->message
+                        );
+                    }
+                }
+            }
+
+
+            return array(
+                'success' => $option_saved,
+            );
+        }
+
+        if($endpoint == 'wp_email_eligibility_check'){
+            $email_enabled = @$options[lead_connector_constants\lc_options_email_smtp_enabled] == 'true' ? true : false ;
+            $active_email_id = @$options[lead_connector_constants\lc_options_email_smtp_email] ;
+
+            $response = $this->lc_wp_get($endpoint);
+
+            return array(
+                'emailEnabled' => $email_enabled,
+                'enabledEmailId' => $active_email_id,
+                'response'=> $response
+            );
+        }
+        
+        if($endpoint == 'wp_disable_email'){
+            $body = json_decode($params['data']);
+            $response = $this->lc_wp_get($endpoint, $body);
+            $option_saved = false;
+            if(!@$response->error || @$response->http_code == 500 ){
+                $newOptions = get_option(LEAD_CONNECTOR_OPTION_NAME);
+
+                $newOptions[lead_connector_constants\lc_options_email_smtp_enabled] = 'false';
+                $newOptions[lead_connector_constants\lc_options_email_smtp_email] = null;
+                $newOptions[lead_connector_constants\lc_options_email_smtp_password] = null;
+                $newOptions[lead_connector_constants\lc_options_email_smtp_port] = null;
+                $newOptions[lead_connector_constants\lc_options_email_smtp_server] = null;
+                $newOptions[lead_connector_constants\lc_options_email_smtp_provider] = null;
+
+                $option_saved = update_option(LEAD_CONNECTOR_OPTION_NAME, $newOptions);
+            }
+
+            return array(
+                'success' => true, 
+                'response' => $response,
+            );
+
+        }
+
+        if($endpoint == 'check_smtp_plugin_conflict'){
+            
+            return $this->check_smtp_plugin_conflict();
+        }
+
+        if(isset($params['data'])){    
+            $params = json_decode($params['data']);
+        }
+
+        return $this->lc_wp_get($endpoint, $params);
+
+    }
+
+    private function lc_oauth_regenerate_token()
+    {
+    
+        $lcOptions = get_option(LEAD_CONNECTOR_OPTION_NAME);
+
+        $lcRefreshToken = $this->lc_decrypt_string($lcOptions[lead_connector_constants\lc_options_oauth_refresh_token]);
+        $token_response = $this->lc_perform_oauth_request("refresh", $lcRefreshToken);
+        
+        if (!isset($token_response->response->error)) {
+            echo "Updating Options";
+            $newOptions[lead_connector_constants\lc_options_oauth_access_token] = $this->lc_encrypt_string($token_response->access_token);
+            $newOptions[lead_connector_constants\lc_options_oauth_refresh_token] = $this->lc_encrypt_string($token_response->refresh_token);
+            
+            if (isset($token_response->userType) && $token_response->userType == 'Location') {
+                $newOptions[lead_connector_constants\lc_options_location_id] = $token_response->locationId;
+            }
+
+            update_option(LEAD_CONNECTOR_OPTION_NAME, $newOptions);
+        }
+
+        return array(
+            "success" => true,
+        );
+
+    }
+
+    private function lc_wp_get($endpoint, $params = array()){
+
+        $params = (object) $params;
+        $httpMethod = "GET";
+
+        $lcOptions = get_option(LEAD_CONNECTOR_OPTION_NAME);
+
+        
+        $api_key = isset($lcOptions[lead_connector_constants\lc_options_api_key]) ? $lcOptions[lead_connector_constants\lc_options_api_key] : null ;
+        $lcAccessToken = isset($lcOptions[lead_connector_constants\lc_options_oauth_access_token]) ? $lcOptions[lead_connector_constants\lc_options_oauth_access_token] : null ;
+        $lcAccessToken = $this->lc_decrypt_string($lcAccessToken);
+        $lcLocationId = isset($lcOptions[lead_connector_constants\lc_options_location_id]) ? $lcOptions[lead_connector_constants\lc_options_location_id] : null ;
+
+        $finalEndpoint = "";
+        $authMethod = 'api_key';
+
+        if($lcAccessToken != ''){
+            $authMethod = 'oauth';
+        }
+
+        $baseHost = LEAD_CONNECTOR_BASE_URL;
+
+
+        if( $authMethod == 'api_key'){
+
+            if($endpoint == 'funnels_get_list')
+                $finalEndpoint = "v1/funnels/?includeDomainId=true&includeTrackingCode=true";
+            
+            if($endpoint == 'get_chat_widget')
+                $finalEndpoint = "v1/locations/me?includeWhiteLabelUrl=true";
+            
+            if($endpoint == 'funnels_get_details')
+                $finalEndpoint = "v1/funnels/".$params->funnelId."/pages/?includeMeta=true&includePageDataDownloadURL=true";
+
+        }else {
+            $baseHost = LEAD_CONNECTOR_SERVICES_BASE_URL;
+
+            if($endpoint == 'funnels_get_list')
+                $finalEndpoint = "funnels/funnel/list?locationId=".$lcLocationId;
+            
+            if($endpoint == 'get_chat_widget')
+                $finalEndpoint = "wordpress/lc-plugin/chat-widget/".$lcLocationId.'/';
+
+            if($endpoint == 'funnels_get_details')
+                throw new Exception("Endpoint not supported for oauth");
+
+            if($endpoint == 'wp_email_eligibility_check')
+                $finalEndpoint = "wordpress/lc-plugin/emails/eligibility/".$lcLocationId.'/';
+
+            if($endpoint == 'wp_enable_email')
+                $finalEndpoint = "wordpress/lc-plugin/emails/generate-smtp/".$lcLocationId.'/?domain='.$params->domain.'&emailPrefix='.$params->emailPrefix;
+
+            if($endpoint == 'wp_disable_email')
+                $finalEndpoint = "wordpress/lc-plugin/emails/delete-smtp/".$lcLocationId.'/?emailId='.$params->email;
+
+            if($endpoint == 'forms_get_list')
+                $finalEndpoint = "wordpress/lc-plugin/forms/".$lcLocationId."/?page=".$params->page."&perPage=".$params->per_page ;
+
+            if($endpoint == 'phone_numbers_get_list')
+                $finalEndpoint = "wordpress/lc-plugin/phone-system/pools/".$lcLocationId ;
+            
+        }
+
+   
+        if($finalEndpoint == ''){
+            return array(
+                'error' => true, 
+                'message' => 'Invalid Endpoint received',
+                'endpoint' => $endpoint,
+                'finalEndpoint' => $finalEndpoint,
+                'auth' => $authMethod, 
+                'lcAccessToken' => $lcAccessToken
+            );
+        }
+
+
+
+        // return array(
+        //     'finalEndpoint' => $finalEndpoint,
+        //     'authMethod' => $authMethod,
+        //     'baseHost' => $baseHost,
+        //     'lcAccessToken' => $lcAccessToken,
+        //     'api_key' => $api_key
+        // );
+
+        if($authMethod == 'oauth'){
+            return $this->lc_oauth_wp_remote_get($finalEndpoint, $lcAccessToken, $baseHost);
+        }
+
+        return $this->lc_wp_remote_get($finalEndpoint, $api_key, $baseHost);
+    }
+
+    /**
+     * Encrypts a string using WordPress salt and key
+     * @since    1.0.0
+     * @param    string    $string    String to encrypt
+     * @return   string    Encrypted string
+     */
+    private function lc_encrypt_string($string) {
+        $encryption = new LC_Data_Encryption();
+        return $encryption->encrypt($string);
+    }
+
+    /**
+     * Decrypts a string using WordPress salt and key
+     * @since    1.0.0
+     * @param    string    $encrypted    String to decrypt
+     * @return   string    Decrypted string
+     */
+    private function lc_decrypt_string($encrypted) {
+        $encryption = new LC_Data_Encryption();
+        return $encryption->decrypt($encrypted);
+    }
+
+    
+
+    private function lc_perform_oauth_request($endpoint = "validate" , $code = null){
+
+        $finalEndpoint = "wordpress/lc-plugin/oauth/".$endpoint;
+    
+        $body = array();
+
+        if($endpoint == "validate"){
+            $body['code'] = $code;
+        }else {
+            $body['refresh_token'] = $code;
+        }
+
         $args = array(
+            'timeout' => 60,
+            'body' => $body
+        );
+
+        // LEAD_CONNECTOR_SERVICES_BASE_URL
+        $response = wp_remote_post(LEAD_CONNECTOR_SERVICES_BASE_URL . $finalEndpoint, $args);
+        $http_code = wp_remote_retrieve_response_code($response);
+        $body = wp_remote_retrieve_body($response);
+
+
+        if ($http_code === 200 || $http_code === 201) {
+            $obj = json_decode($body, false);
+            return $obj;
+        } else {
+            return (object) (array(
+                'error' => true,
+                'http_code'=> $http_code, 
+                'body' => $body
+            ));
+        }
+
+    }
+
+
+
+    private function lc_oauth_wp_remote_get($endpoint, $lcAccessToken, $baseHost = LEAD_CONNECTOR_SERVICES_BASE_URL)
+    {
+        $attempt = 1;
+        $lcOptions = get_option(LEAD_CONNECTOR_OPTION_NAME);
+        $lcAccessToken = $lcOptions[lead_connector_constants\lc_options_oauth_access_token];
+        $lcAccessToken = $this->lc_decrypt_string($lcAccessToken);
+        $http_code = 100 ;
+        $tokenRegenerationStatus = null ;
+        $all_attempts = array();
+        while ($attempt <= 2) {
+
+            $args = array(
+                'timeout' => 60,
+                'headers' => array(
+                    'Authorization' => "Bearer " . $lcAccessToken,
+                    'Accept' => 'application/json',
+                    'version' => '2021-04-15', 
+                ),
+            );
+
+            $response = wp_remote_get(LEAD_CONNECTOR_SERVICES_BASE_URL . $endpoint, $args);
+            $http_code = wp_remote_retrieve_response_code($response);
+            $body = wp_remote_retrieve_body($response);
+
+            array_push($all_attempts, array(
+                'http_code' => $http_code,
+                'body' => $body,
+            ));
+
+            if ($http_code === 200 || $http_code === 201) {
+                $obj = json_decode($body, false);
+                return $obj;
+            } else if ($http_code == 401) {
+                $tokenRegenerationStatus = $this->lc_oauth_regenerate_token();
+            } else {
+                return (object) (array(
+                    'error' => true,
+                    'http_code'=> $http_code, 
+                    'body' => $body,
+                    'from' => 'oauth_wp_remote_get'
+                ));
+            }
+
+            $attempt++;
+        }
+
+        // if($tokenRegenerationStatus->response->status != 200 && $tokenRegenerationStatus->response->status != 201){
+            // return $this->lc_disconnect();
+        // }
+
+        return (array(
+            'error' => true,
+            'http_code' => $http_code,
+            "token_refresh_status" => $tokenRegenerationStatus,
+            "lcAccessToken" => $lcAccessToken,
+            'attempt' => $attempt,
+            "all_attempts" => $all_attempts,
+        ));
+    }
+
+    private function lc_wp_remote_get($endpoint, $api_key, $baseHost = LEAD_CONNECTOR_BASE_URL)
+    {
+
+         //else call Remote API here
+         $args = array(
             'timeout' => 60,
             'headers' => array(
                 'Authorization' => 'Bearer ' . $api_key,
@@ -566,8 +1060,11 @@ class LeadConnector_Admin
         } else {
             return (array(
                 'error' => true,
+                'http_code' => $http_code,
+                'from' => 'wp_remote_get_api'
             ));
         }
+
     }
 
     /**
@@ -596,11 +1093,11 @@ class LeadConnector_Admin
          * class.
          */
 
-        $css_to_load = plugin_dir_url(__FILE__) . '/css/app.min.css';
-        $vendor_css_to_load = plugin_dir_url(__FILE__) . '/css/chunk-vendors.min.css';
+        $css_to_load = plugin_dir_url(__FILE__) . 'app.css';
+        $vendor_css_to_load = plugin_dir_url(__FILE__) . 'app2.css';
 
         wp_enqueue_style('vue_lead_connector_app', $css_to_load, array(), $this->version, 'all');
-        wp_enqueue_style('vue_lead_connector_vendor', $vendor_css_to_load, array(), $this->version, 'all');
+        // wp_enqueue_style('vue_lead_connector_vendor', $vendor_css_to_load, array(), $this->version, 'all');
 
     }
 
@@ -634,15 +1131,15 @@ class LeadConnector_Admin
         wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/lc-admin.js', array('jquery'), $this->version, false);
         if (in_array($_SERVER['REMOTE_ADDR'], array('10.255.0.2', '::1'))) {
             // DEV Vue dynamic loading
-            $js_to_load = plugin_dir_url(__FILE__) . 'js/app.min.js';
-            $vendor_js_to_load = plugin_dir_url(__FILE__) . 'js/chunk-vendors.min.js';
+            $js_to_load = plugin_dir_url(__FILE__) . 'app.js';
+            $vendor_js_to_load = plugin_dir_url(__FILE__) . 'chunk-vendors.js';
 
-            wp_enqueue_script('vue_lead_connector_vendor_js', $vendor_js_to_load, '', wp_rand(11, 1000), true);
+            // wp_enqueue_script('vue_lead_connector_vendor_js', $vendor_js_to_load, '', wp_rand(11, 1000), true);
 
         } else {
-            $js_to_load = plugin_dir_url(__FILE__) . 'js/app.min.js';
-            $vendor_js_to_load = plugin_dir_url(__FILE__) . 'js/chunk-vendors.min.js';
-            wp_enqueue_script('vue_lead_connector_vendor_js', $vendor_js_to_load, '', wp_rand(11, 1000), true);
+            $js_to_load = plugin_dir_url(__FILE__) . 'app.js';
+            $vendor_js_to_load = plugin_dir_url(__FILE__) . 'chunk-vendors.js';
+            // wp_enqueue_script('vue_lead_connector_vendor_js', $vendor_js_to_load, '', wp_rand(11, 1000), true);
         }
 
         $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
@@ -651,16 +1148,35 @@ class LeadConnector_Admin
             $enabledTextWidget = esc_attr($options[lead_connector_constants\lc_options_enable_text_widget]);
         }
 
-        wp_localize_script($this->plugin_name, 'lc_admin_settings',
+        wp_localize_script(
+            $this->plugin_name,
+            'lc_admin_settings',
             array(
                 'enable_text-widget' => $enabledTextWidget,
                 'proxy_url' => rest_url('lc_public_api/v1/proxy'),
                 'nonce' => wp_create_nonce('wp_rest'),
+            )
+        );
+
+        wp_enqueue_script('vue_lead_connector_js', $js_to_load, '', wp_rand(10, 1000), array(
+            'type'  => 'module',
             ));
 
-        wp_enqueue_script('vue_lead_connector_js', $js_to_load, '', wp_rand(10, 1000), true);
+            function add_type_attribute($tag, $handle, $src) {
+                // if not your script, do nothing and return original $tag
+                if ( 'vue_lead_connector_js' !== $handle ) {
+                    return $tag;
+                }
+                // change the script tag by adding type="module" and return it.
+                $tag = '<script type="module" src="' . esc_url( $src ) . '"></script>';
+                return $tag;
+            }
 
+            add_filter('script_loader_tag', 'add_type_attribute' , 10, 3);
     }
+
+
+ 
 
     /**
      * Top level menu callback function
@@ -674,8 +1190,8 @@ class LeadConnector_Admin
     public function wporg_options_page()
     {
         add_menu_page(
-            __('Lead Connector', 'LeadConnector'),
-            __('Lead Connector', 'LeadConnector'),
+            __('LeadConnector', 'LeadConnector'),
+            __('LeadConnector', 'LeadConnector'),
             'manage_options',
             'lc-plugin',
             'lead_connector_render_plugin_settings_page',
@@ -690,7 +1206,7 @@ class LeadConnector_Admin
      */
     public function register_settings()
     {
-        add_settings_section('api_settings_inputs', __('leadconnector', 'LeadConnector'), 'lead_connector_section_text1', 'lead_connector_plugin');
+        // add_settings_section('api_settings_inputs', __('leadconnector', 'LeadConnector'), 'lead_connector_section_text1', 'lead_connector_plugin');
 
         register_setting(LEAD_CONNECTOR_OPTION_NAME, LEAD_CONNECTOR_OPTION_NAME, array(
             'sanitize_callback' => array($this, 'lead_connector_setting_validate'),
@@ -705,7 +1221,7 @@ class LeadConnector_Admin
             // Here we register our callback. The callback is fired when this endpoint is matched by the WP_REST_Server class.
             'callback' => array($this, 'lc_public_api_proxy'),
             'permission_callback' => function () {
-                return current_user_can( 'manage_options' );
+                return current_user_can('manage_options');
             },
         ));
         register_rest_route('lc_public_api/v1', 'proxy', array(
@@ -714,12 +1230,15 @@ class LeadConnector_Admin
             // Here we register our callback. The callback is fired when this endpoint is matched by the WP_REST_Server class.
             'callback' => array($this, 'lc_public_api_proxy'),
             'permission_callback' => function () {
-                return current_user_can( 'manage_options' );
+                return current_user_can('manage_options');
             },
         ));
 
     }
 
+    public function refresh_oauth_token (){
+        return $this->lc_oauth_regenerate_token();
+    }
     public function register_custom_post()
     {
         $labels = array(
@@ -801,8 +1320,10 @@ class LeadConnector_Admin
                     foreach ($lc_post_meta->customMeta as $customMeta) {
                         if (isset($customMeta)) {
 
-                            if (isset($customMeta->name) && $customMeta->name !== '' &&
-                                isset($customMeta->content) && $customMeta->content !== '') {
+                            if (
+                                isset($customMeta->name) && $customMeta->name !== '' &&
+                                isset($customMeta->content) && $customMeta->content !== ''
+                            ) {
                                 $custom_meta = '<meta property="' . $customMeta->name . '" content="' . $customMeta->content . '"/>';
                                 $default_meta_fields .= $custom_meta;
                             }
@@ -951,33 +1472,33 @@ class LeadConnector_Admin
                 if ($lc_display_method == "iframe") {
                     $content = $this->get_page_iframe($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon);
                     $allowed_html = array(
-                    'head'      => array(),
-                    'style'     => array(),
-                    'body'      => array(),
-                    'html'      => array(),
-                    'title'     => array(),
-                    'script'    => array(),
-                    'noscript'    => array(),
-                    //links
-                    'iframe'     => array(
-                        'href' => array(),
-                        'src' => array(),
-                        'width' => array(),
-                        'height' => array(),
-                        'frameborder' => array(),
-                        'allowfullscreen' => array()
-                    ),
-                    'meta'     => array(
-                        'property' => array(),
-                        'content' => array(),
-                        'name' => array()
-                    ),
-                    'link'     => array(
-                        'rel' => array(),
-                        'type' => array(),
-                        'href' => array()
-                    )
-                );
+                        'head' => array(),
+                        'style' => array(),
+                        'body' => array(),
+                        'html' => array(),
+                        'title' => array(),
+                        'script' => array(),
+                        'noscript' => array(),
+                        //links
+                        'iframe' => array(
+                            'href' => array(),
+                            'src' => array(),
+                            'width' => array(),
+                            'height' => array(),
+                            'frameborder' => array(),
+                            'allowfullscreen' => array()
+                        ),
+                        'meta' => array(
+                            'property' => array(),
+                            'content' => array(),
+                            'name' => array()
+                        ),
+                        'link' => array(
+                            'rel' => array(),
+                            'type' => array(),
+                            'href' => array()
+                        )
+                    );
                     // echo $content;
                     echo wp_kses($content, $allowed_html);
                 } else {
@@ -988,5 +1509,34 @@ class LeadConnector_Admin
 
         }
 
+    }
+
+    public function check_smtp_plugin_conflict()
+    {
+        if (!function_exists('get_plugins')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+        $plugins = get_plugins();
+        $could_have_conflict = false;
+        $plugins_with_conflict = "";
+        $active_plugins = get_option('active_plugins');
+        foreach ($plugins as $plugin_key => $plugin) { // get the key of array plugins aswell 
+            if (strpos($plugin['Name'], 'SMTP') !== false) {
+                if(in_array($plugin_key, $active_plugins)){
+                    $could_have_conflict = true;
+
+                    if($plugins_with_conflict == ""){
+                        $plugins_with_conflict .= $plugin['Name'];
+                    }else{
+                        $plugins_with_conflict .= ", " . $plugin['Name'] . ", ";
+                    }
+                }
+            }
+        }
+       
+        return array(
+            'could_have_conflict' => $could_have_conflict,
+            'plugins' => $plugins_with_conflict,
+        );
     }
 }

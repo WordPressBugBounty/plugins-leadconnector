@@ -53,7 +53,7 @@ function lead_connector_render_plugin_settings_page()
     ?>
     <form action="options.php" method="post">
         <?php
-settings_fields(LEAD_CONNECTOR_OPTION_NAME);
+    settings_fields(LEAD_CONNECTOR_OPTION_NAME);
     do_settings_sections('lead_connector_plugin');?>
         <div id="lead-connecter-settings-holder" data-settings="<?php esc_attr($ui_setting);?>"></div>
     </form>

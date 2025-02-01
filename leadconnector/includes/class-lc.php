@@ -113,11 +113,14 @@ class LeadConnector
          * of the plugin.
          */
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-lc-i18n.php';
+        require_once plugin_dir_path(dirname(__FILE__)) . 'admin/class-data-encryption.php';
+
 
         /**
          * The class responsible for defining all actions that occur in the admin area.
          */
         require_once plugin_dir_path(dirname(__FILE__)) . 'admin/class-lc-admin.php';
+        
 
         /**
          * The class responsible for defining all actions that occur in the public-facing

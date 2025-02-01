@@ -42,6 +42,9 @@ class LeadConnector_Loader
      */
     protected $filters;
 
+    private $plugin_name;
+    private $version ;
+
     /**
      * Initialize the collections used to maintain the actions and filters.
      *
@@ -52,6 +55,13 @@ class LeadConnector_Loader
 
         $this->actions = array();
         $this->filters = array();
+
+        if (defined('LEAD_CONNECTOR_VERSION')) {
+            $this->version = LEAD_CONNECTOR_VERSION;
+        } else {
+            $this->version = '1.0.0';
+        }
+        $this->plugin_name = LEAD_CONNECTOR_PLUGIN_NAME;
 
     }
 
@@ -121,6 +131,92 @@ class LeadConnector_Loader
      */
     public function run()
     {
+    
+
+        $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
+   
+        function lc_init_emails($phpmailer) {
+
+            $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
+            $phpmailer->isSMTP();
+            $phpmailer->Host = $options[lead_connector_constants\lc_options_email_smtp_server]; ;
+            $phpmailer->SMTPAuth = true;
+            $phpmailer->Port = $options[lead_connector_constants\lc_options_email_smtp_port];
+            $phpmailer->Username = $options[lead_connector_constants\lc_options_email_smtp_email];
+            $phpmailer->Password = $options[lead_connector_constants\lc_options_email_smtp_password];
+            $phpmailer->From = $options[lead_connector_constants\lc_options_email_smtp_email];
+
+        }
+
+        if(@$options[lead_connector_constants\lc_options_email_smtp_enabled] == 'true') {
+
+            add_filter("phpmailer_init", "lc_init_emails", 10, 1);
+        }
+
+
+
+        function lc_phone_number_embed($params) {
+
+            $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
+            $location_id = $options[lead_connector_constants\lc_options_location_id];
+       
+           return "
+                <script src=\"https://api.leadconnectorhq.com/loc/".$location_id."\/pool/".$params['id']."/number_pool.js\"></script>
+                <script src=\"https://api.leadconnectorhq.com/js/user_session.js\"></script>
+           ";
+        }
+
+        add_shortcode('lc_phone_number_pool', 'lc_phone_number_embed');
+
+
+        function lc_forms_embed( $params ){
+
+            $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
+            $lc_white_label_url = @$options[lead_connector_constants\lc_options_location_white_label_url];
+
+            if(!$lc_white_label_url)
+                $lc_white_label_url = LEAD_CONNECTOR_CDN_BASE_URL;
+
+            $formId = $params['id'];
+            $formTitle = $params['title'];
+            return "
+                <iframe src=\"https://api.leadconnectorhq.com/widget/form/$formId\"
+                    style=\"width:100%;height:100%;border:none;\" id=\"inline-".$formId."\"
+                    data-layout=\"{'id':'INLINE','minimizedTitle':'','isLeftAligned':true,'isRightAligned':false,'allowMinimize':false}\"
+                    data-trigger-type=\"alwaysShow\" data-trigger-value=\"\" data-activation-type=\"alwaysActivated\" data-activation-value=\"\"
+                    data-deactivation-type=\"neverDeactivate\" data-deactivation-value=\"\" data-form-name=\"$formTitle\" data-height=\"600\"
+                    data-layout-iframe-id=\"inline-$formId\" data-form-id=\"$formId\" title=\"$formTitle\">
+                </iframe>
+                <script src=\"https://link.msgsndr.com/js/form_embed.js\"></script>
+            ";
+        }
+
+        add_shortcode('lc_form', 'lc_forms_embed');
+
+
+
+        function schedule_my_cron(){
+            // Schedules the event if it's NOT already scheduled.
+            if ( ! wp_next_scheduled ( 'my_5min_event' ) ) {
+                wp_schedule_event( time(), 'twicedaily', 'lc_twicedaily_refresh_req' );
+            }
+        }
+
+        // Registers and schedules the my_5min_event cron event.
+        add_action( 'init', 'schedule_my_cron' );
+
+        // Runs fivemin_schedule_hook() function every 5 minutes.
+
+        function oauth_refresh_schedule_hook(){
+
+            $lcAdmin = new LeadConnector_Admin(
+                $this->plugin_name,
+                $this->version
+            );
+            $lcAdmin->refresh_oauth_token();
+
+        }
+        add_action( 'lc_twicedaily_refresh_req', 'oauth_refresh_schedule_hook' );
 
         foreach ($this->filters as $hook) {
             add_filter($hook['hook'], array($hook['component'], $hook['callback']), $hook['priority'], $hook['accepted_args']);
