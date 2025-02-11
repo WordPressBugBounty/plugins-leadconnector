@@ -148,9 +148,10 @@ class LeadConnector_Loader
 
         }
 
-        if(@$options[lead_connector_constants\lc_options_email_smtp_enabled] == 'true') {
-
-            add_filter("phpmailer_init", "lc_init_emails", 10, 1);
+        if(isset($options[lead_connector_constants\lc_options_email_smtp_enabled])){
+            if($options[lead_connector_constants\lc_options_email_smtp_enabled] == 'true') {
+                add_filter("phpmailer_init", "lc_init_emails", 10, 1);
+            }
         }
 
 
@@ -197,13 +198,14 @@ class LeadConnector_Loader
 
         function schedule_my_cron(){
             // Schedules the event if it's NOT already scheduled.
-            if ( ! wp_next_scheduled ( 'my_5min_event' ) ) {
+            if ( ! wp_next_scheduled ( 'lc_twicedaily_refresh_req' ) ) {
                 wp_schedule_event( time(), 'twicedaily', 'lc_twicedaily_refresh_req' );
             }
         }
 
-        // Registers and schedules the my_5min_event cron event.
-        add_action( 'init', 'schedule_my_cron' );
+        if(isset($options[lead_connector_constants\lc_options_oauth_refresh_token]) && $options[lead_connector_constants\lc_options_oauth_refresh_token] !== "") {
+            add_action( 'init', 'schedule_my_cron' );
+        }
 
         // Runs fivemin_schedule_hook() function every 5 minutes.
 
