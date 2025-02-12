@@ -208,17 +208,18 @@ class LeadConnector_Loader
         }
 
         // Runs fivemin_schedule_hook() function every 5 minutes.
-
-        function oauth_refresh_schedule_hook(){
+        $plugin_name =  $this->plugin_name;
+        $plugin_version = $this->version;
+        $oauth_refresh_schedule_hook = function() use ($plugin_name, $plugin_version) {
 
             $lcAdmin = new LeadConnector_Admin(
-                $this->plugin_name,
-                $this->version
+                $plugin_name,
+                $plugin_version
             );
             $lcAdmin->refresh_oauth_token();
 
-        }
-        add_action( 'lc_twicedaily_refresh_req', 'oauth_refresh_schedule_hook' );
+        };
+        add_action( 'lc_twicedaily_refresh_req', $oauth_refresh_schedule_hook );
 
         foreach ($this->filters as $hook) {
             add_filter($hook['hook'], array($hook['component'], $hook['callback']), $hook['priority'], $hook['accepted_args']);
