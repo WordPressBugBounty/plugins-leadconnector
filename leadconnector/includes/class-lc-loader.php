@@ -196,11 +196,23 @@ class LeadConnector_Loader
 
 
 
+        function clear_previously_cron_jobs() {
+            $hook_name = 'lc_twicedaily_refresh_req'; // Replace with your actual cron hook name
+            while ( $timestamp = wp_next_scheduled( $hook_name ) ) {
+                wp_unschedule_event( $timestamp, $hook_name );
+            }
+        }
+
         function schedule_my_cron(){
             // Schedules the event if it's NOT already scheduled.
-            if ( ! wp_next_scheduled ( 'lc_twicedaily_refresh_req' ) ) {
-                wp_schedule_event( time(), 'twicedaily', 'lc_twicedaily_refresh_req' );
+            if ( ! wp_next_scheduled ( 'lc_twicedaily_refresh_req_v2' ) ) {
+                wp_schedule_event( time(), 'twicedaily', 'lc_twicedaily_refresh_req_v2' );
             }
+
+            if ( wp_next_scheduled ( 'lc_twicedaily_refresh_req' ) ) {
+                clear_previously_cron_jobs();
+            }
+
         }
 
         if(isset($options[lead_connector_constants\lc_options_oauth_refresh_token]) && $options[lead_connector_constants\lc_options_oauth_refresh_token] !== "") {
@@ -219,7 +231,7 @@ class LeadConnector_Loader
             $lcAdmin->refresh_oauth_token();
 
         };
-        add_action( 'lc_twicedaily_refresh_req', $oauth_refresh_schedule_hook );
+        add_action( 'lc_twicedaily_refresh_req_v2', $oauth_refresh_schedule_hook );
 
         foreach ($this->filters as $hook) {
             add_filter($hook['hook'], array($hook['component'], $hook['callback']), $hook['priority'], $hook['accepted_args']);

@@ -16,7 +16,7 @@
  * Plugin Name:       LeadConnector
  * Plugin URI:        https://www.leadconnectorhq.com/wp_plugin
  * Description:       This plugin helps you to add the lead connector widgets to your website.
- * Version:           2.0.4
+ * Version:           2.0.5
  * Author:            LeadConnector
  * Author URI:        https://www.leadconnectorhq.com
  * License:           GPL-2.0+
@@ -35,7 +35,7 @@ if (!defined('WPINC')) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define('LEAD_CONNECTOR_VERSION', '2.0');
+define('LEAD_CONNECTOR_VERSION', '2.0.5');
 define('LEAD_CONNECTOR_PLUGIN_NAME', 'LeadConnector');
 
 // define('LEAD_CONNECTOR_SERVICES_BASE_URL', 'https://staging.services.leadconnectorhq.com/');
