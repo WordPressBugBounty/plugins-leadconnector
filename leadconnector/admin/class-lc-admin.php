@@ -332,19 +332,22 @@ class LeadConnector_Admin
             $body = json_decode($params['data']);
             $token_response = $this->lc_perform_oauth_request("validate", $body->code);
             $previous_options = get_option(LEAD_CONNECTOR_OPTION_NAME);
+            if(!is_array($previous_options))
+                $previous_options = array();
+
             $option_saved = false;
 
-            if (!property_exists($token_response, "error")) {
-                $previous_options[lead_connector_constants\lc_options_oauth_access_token] = $this->lc_encrypt_string($token_response->access_token);
-                $previous_options[lead_connector_constants\lc_options_oauth_refresh_token] = $this->lc_encrypt_string($token_response->refresh_token);
-                if ($token_response->userType == 'Location') {
-                    $previous_options[lead_connector_constants\lc_options_location_id] = $token_response->locationId;
+                if (!property_exists($token_response, "error")) {
+                    if ($token_response->userType == 'Location') {
+
+                        $previous_options[lead_connector_constants\lc_options_oauth_access_token] = $this->lc_encrypt_string($token_response->access_token);
+                        $previous_options[lead_connector_constants\lc_options_oauth_refresh_token] = $this->lc_encrypt_string($token_response->refresh_token);
+                        $previous_options[lead_connector_constants\lc_options_location_id] = $token_response->locationId;
+                    }
+
+                    $option_saved = update_option(LEAD_CONNECTOR_OPTION_NAME, $previous_options);
                 }
-
-
-                $option_saved = update_option(LEAD_CONNECTOR_OPTION_NAME, $previous_options);
-            }
-
+            
 
             return array(
                 "previous_options" => $previous_options,
@@ -806,19 +809,29 @@ class LeadConnector_Admin
     
         $lcOptions = get_option(LEAD_CONNECTOR_OPTION_NAME);
 
-        $lcRefreshToken = $this->lc_decrypt_string($lcOptions[lead_connector_constants\lc_options_oauth_refresh_token]);
-        $token_response = $this->lc_perform_oauth_request("refresh", $lcRefreshToken);
-        
-        if (!isset($token_response->response->error)) {
-            echo "Updating Options";
-            $newOptions[lead_connector_constants\lc_options_oauth_access_token] = $this->lc_encrypt_string($token_response->access_token);
-            $newOptions[lead_connector_constants\lc_options_oauth_refresh_token] = $this->lc_encrypt_string($token_response->refresh_token);
-            
-            if (isset($token_response->userType) && $token_response->userType == 'Location') {
-                $newOptions[lead_connector_constants\lc_options_location_id] = $token_response->locationId;
-            }
+        if(!is_array($lcOptions))
+            return array(
+                "success" => false
+            );
 
-            update_option(LEAD_CONNECTOR_OPTION_NAME, $newOptions);
+        if(!isset($lcOptions[lead_connector_constants\lc_options_oauth_refresh_token]))
+            return array(
+                "success" => false
+            );
+
+        $lcRefreshToken = $this->lc_decrypt_string($lcOptions[lead_connector_constants\lc_options_oauth_refresh_token]);
+        $token_response = $this->lc_perform_oauth_request("refresh", $lcRefreshToken , $lcOptions[lead_connector_constants\lc_options_location_id]);
+        
+        if (isset($token_response->response->code) && ($token_response->response->code == 200 || $token_response->response->code == 201)) {
+            if (!isset($token_response->response->error) ) {
+                if (isset($token_response->userType) && $token_response->userType == 'Location') {
+                    $lcOptions[lead_connector_constants\lc_options_location_id] = $token_response->locationId;
+                    $lcOptions[lead_connector_constants\lc_options_oauth_access_token] = $this->lc_encrypt_string($token_response->access_token);
+                    $lcOptions[lead_connector_constants\lc_options_oauth_refresh_token] = $this->lc_encrypt_string($token_response->refresh_token);
+                    
+                    update_option(LEAD_CONNECTOR_OPTION_NAME, $lcOptions);
+                }
+            }
         }
 
         return array(
@@ -943,7 +956,7 @@ class LeadConnector_Admin
 
     
 
-    private function lc_perform_oauth_request($endpoint = "validate" , $code = null){
+    private function lc_perform_oauth_request($endpoint = "validate" , $code = null, $locationId = null){
 
         $finalEndpoint = "wordpress/lc-plugin/oauth/".$endpoint;
     
@@ -953,6 +966,10 @@ class LeadConnector_Admin
             $body['code'] = $code;
         }else {
             $body['refresh_token'] = $code;
+        }
+
+        if($locationId != null && $endpoint == "refresh"){
+            $finalEndpoint = "wordpress/lc-plugin/oauth/location/:locationId/refresh?locationId=".$locationId;
         }
 
         $args = array(
