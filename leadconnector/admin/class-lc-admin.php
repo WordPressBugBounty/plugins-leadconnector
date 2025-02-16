@@ -66,8 +66,8 @@ class LeadConnector_Admin
      */
     public function lead_connector_setting_validate($input, $forced_save = false)
     {
-        error_log("called_setting_saved");
-        error_log(print_r($input, true));
+        // error_log("called_setting_saved");
+        // error_log(print_r($input, true));
 
 
         $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
@@ -113,7 +113,7 @@ class LeadConnector_Admin
 
 
         if (defined('WP_DEBUG') && true === WP_DEBUG) {
-            error_log(print_r($input, true));
+            // error_log(print_r($input, true));
         }
 
         if ($enabled_text_widget == 1 || $forced_save) {
@@ -121,7 +121,7 @@ class LeadConnector_Admin
             // die('reached 1.4');
 
             if (defined('WP_DEBUG') && true === WP_DEBUG) {
-                error_log('call API here ');
+                // error_log('call API here ');
             }
 
             $lcChatResponse = $this->lc_wp_get('get_chat_widget');
@@ -138,7 +138,7 @@ class LeadConnector_Admin
                 if (isset($obj->settings) && isset($obj->settings->textwidget) && count((array) $obj->settings->textwidget) > 0) {
                     $input[lead_connector_constants\lc_options_text_widget_settings] = wp_json_encode($obj->settings->textwidget, JSON_UNESCAPED_UNICODE);
                 } else {
-                    error_log('chat widget not configured');
+                    // error_log('chat widget not configured');
                     $input[lead_connector_constants\lc_options_text_widget_warning_text] = 'Please configure chat widget first!';
 
                     if (isset($options[lead_connector_constants\lc_options_text_widget_heading])) {
@@ -157,12 +157,12 @@ class LeadConnector_Admin
                     $input[lead_connector_constants\lc_options_location_white_label_url] = "";
                 }
                 if (defined('WP_DEBUG') && true === WP_DEBUG) {
-                    error_log(print_r($lcChatResponse, true));
-                    error_log(print_r($obj, true));
+                    // error_log(print_r($lcChatResponse, true));
+                    // error_log(print_r($obj, true));
                 }
             } else {
-                error_log('Please provide correct API key, error details below');
-                error_log(print_r($lcChatResponse, true));
+                // error_log('Please provide correct API key, error details below');
+                // error_log(print_r($lcChatResponse, true));
                 $input[lead_connector_constants\lc_options_text_widget_error] = "1";
                 $input[lead_connector_constants\lc_options_text_widget_error_details] = print_r($lcChatResponse, true);
             }
@@ -357,9 +357,9 @@ class LeadConnector_Admin
         }
 
         if ($request->get_method() == 'POST') {
-            error_log("current_user");
-            error_log(print_r($request, true));
-            error_log(print_r($request->get_body(), true));
+            // error_log("current_user");
+            // error_log(print_r($request, true));
+            // error_log(print_r($request->get_body(), true));
 
             if ($endpoint == "wp_save_options") {
                 $body = json_decode($request->get_body());
@@ -426,8 +426,8 @@ class LeadConnector_Admin
                 $body = json_decode($request->get_body());
 
                 if (defined('WP_DEBUG') && true === WP_DEBUG) {
-                    error_log("wp_insert_post");
-                    error_log(print_r($body, true));
+                    // error_log("wp_insert_post");
+                    // error_log(print_r($body, true));
 
                 }
 
@@ -458,10 +458,10 @@ class LeadConnector_Admin
 
                 if (isset($body->lc_funnel_tracking_code) && $lc_include_tracking_code) {
                     if (defined('WP_DEBUG') && true === WP_DEBUG) {
-                        error_log("lc_funnel_tracking_code");
-                        error_log(print_r($body->lc_funnel_tracking_code, true));
-                        error_log(print_r($body->lc_funnel_tracking_code->headerCode, true));
-                        error_log(print_r($body->lc_funnel_tracking_code->footerCode, true));
+                        // error_log("lc_funnel_tracking_code");
+                        // error_log(print_r($body->lc_funnel_tracking_code, true));
+                        // error_log(print_r($body->lc_funnel_tracking_code->headerCode, true));
+                        // error_log(print_r($body->lc_funnel_tracking_code->footerCode, true));
                     }
 
                     $lc_funnel_tracking_code = wp_json_encode($body->lc_funnel_tracking_code, JSON_UNESCAPED_UNICODE);
@@ -470,9 +470,9 @@ class LeadConnector_Admin
 
                 if (isset($body->lc_step_page_download_url) && $lc_include_tracking_code) {
                     if (defined('WP_DEBUG') && true === WP_DEBUG) {
-                        error_log("wp_insert_post_tracking");
-                        error_log(print_r($body->lc_include_tracking_code, true));
-                        error_log(print_r($body->lc_step_page_download_url, true));
+                        // error_log("wp_insert_post_tracking");
+                        // error_log(print_r($body->lc_include_tracking_code, true));
+                        // error_log(print_r($body->lc_step_page_download_url, true));
                     }
 
                     $args = array(
@@ -488,7 +488,7 @@ class LeadConnector_Admin
                         if (isset($tracking_res) && isset($tracking_res->trackingCode)) {
                             $lc_step_trackingCode = base64_encode(wp_json_encode($tracking_res->trackingCode, JSON_UNESCAPED_UNICODE));
                             if (defined('WP_DEBUG') && true === WP_DEBUG) {
-                                error_log(print_r($lc_step_trackingCode, true));
+                                // error_log(print_r($lc_step_trackingCode, true));
                             }
                         }
                     }
@@ -514,10 +514,10 @@ class LeadConnector_Admin
                 $user = wp_get_current_user();
                 $user_id = get_current_user_id();
                 $user_logged_in = is_user_logged_in();
-                error_log("current_user");
-                error_log(print_r($user, true));
-                error_log(print_r($user_id, true));
-                error_log(print_r($user_logged_in, true));
+                // error_log("current_user");
+                // error_log(print_r($user, true));
+                // error_log(print_r($user_id, true));
+                // error_log(print_r($user_logged_in, true));
 
                 $post_data = [];
                 $post_data['post_title'] = "LeadConnector_funnel-" . $lc_funnel_name . "-step-" . $lc_step_name;
@@ -531,7 +531,7 @@ class LeadConnector_Admin
 
                 $post_id = wp_insert_post($post_data);
                 if (is_wp_error($post_id) || $post_id === 0) {
-                    error_log("fail to save the post");
+                    // error_log("fail to save the post");
                     return (array(
                         'error' => true,
                         'message' => "fail to save the post",
@@ -681,7 +681,7 @@ class LeadConnector_Admin
 
             $post_info = wp_delete_post($post_id, $force_delete);
             if (!$post_info) {
-                error_log("fail to delete the post");
+                // error_log("fail to delete the post");
                 return (array(
                     'error' => true,
                     'message' => "fail to delete the post",
@@ -814,7 +814,7 @@ class LeadConnector_Admin
                 "success" => false
             );
 
-        if(!isset($lcOptions[lead_connector_constants\lc_options_oauth_refresh_token]))
+        if(!isset($lcOptions[lead_connector_constants\lc_options_oauth_refresh_token]) && $lcOptions[lead_connector_constants\lc_options_oauth_refresh_token] == '')
             return array(
                 "success" => false
             );
@@ -911,7 +911,6 @@ class LeadConnector_Admin
                 'endpoint' => $endpoint,
                 'finalEndpoint' => $finalEndpoint,
                 'auth' => $authMethod, 
-                'lcAccessToken' => $lcAccessToken
             );
         }
 
@@ -958,7 +957,13 @@ class LeadConnector_Admin
 
     private function lc_perform_oauth_request($endpoint = "validate" , $code = null, $locationId = null){
 
-        $finalEndpoint = "wordpress/lc-plugin/oauth/".$endpoint;
+        if($code == null || $code == '')
+            return array(
+                "error" => true,
+                "message" => "Invalid Refresh Token or Auth Code Not Received"
+            );
+
+        $finalEndpoint = "wordpress/lc-plugin/oauth/".$endpoint."?lcVersion=".LEAD_CONNECTOR_VERSION;
     
         $body = array();
 
@@ -969,12 +974,15 @@ class LeadConnector_Admin
         }
 
         if($locationId != null && $endpoint == "refresh"){
-            $finalEndpoint = "wordpress/lc-plugin/oauth/location/:locationId/refresh?locationId=".$locationId;
+            $finalEndpoint = "wordpress/lc-plugin/oauth/location/:locationId/refresh?locationId=".$locationId."&lcVersion=".LEAD_CONNECTOR_VERSION;
         }
 
         $args = array(
             'timeout' => 60,
-            'body' => $body
+            'body' => $body,
+            'headers' => array(
+                'X-LC-Version' => LEAD_CONNECTOR_VERSION,
+            ),
         );
 
         // LEAD_CONNECTOR_SERVICES_BASE_URL
@@ -1015,8 +1023,16 @@ class LeadConnector_Admin
                     'Authorization' => "Bearer " . $lcAccessToken,
                     'Accept' => 'application/json',
                     'version' => '2021-04-15', 
+                    'X-LC-Version' => LEAD_CONNECTOR_VERSION,
                 ),
             );
+
+            $finalURL = LEAD_CONNECTOR_SERVICES_BASE_URL . $endpoint;
+            if (strpos($finalURL, '?') !== false) {
+                $finalURL .= '&lcVersion=' . LEAD_CONNECTOR_VERSION;
+            } else {
+                $finalURL .= '?lcVersion=' . LEAD_CONNECTOR_VERSION;
+            }
 
             $response = wp_remote_get(LEAD_CONNECTOR_SERVICES_BASE_URL . $endpoint, $args);
             $http_code = wp_remote_retrieve_response_code($response);
@@ -1097,7 +1113,7 @@ class LeadConnector_Admin
             return;
         }
 
-        // error_log(print_r($_SERVER['REMOTE_ADDR'], true));
+        // // error_log(print_r($_SERVER['REMOTE_ADDR'], true));
         /**
          * This function is provided for demonstration purposes only.
          *
@@ -1125,13 +1141,12 @@ class LeadConnector_Admin
      */
     public function enqueue_scripts($hook)
     {
-        error_log("enqueue_scripts");
 
         if ($hook != 'toplevel_page_lc-plugin') {
             return;
         }
-        // error_log(print_r($hook, true));
-        // error_log(print_r($_SERVER['REMOTE_ADDR'], true));
+        // // error_log(print_r($hook, true));
+        // // error_log(print_r($_SERVER['REMOTE_ADDR'], true));
 
         /**
          * This function is provided for demonstration purposes only.
@@ -1352,8 +1367,8 @@ class LeadConnector_Admin
 
             }
         } catch (Exception $e) {
-            error_log("failed to parse the post meta");
-            error_log(print_r($e, true));
+            // error_log("failed to parse the post meta");
+            // error_log(print_r($e, true));
 
         }
         return $default_meta_fields;
@@ -1363,8 +1378,8 @@ class LeadConnector_Admin
     public function get_tracking_code($lc_post_tracking_code, $is_header, $is_funnel = false)
     {
         if (defined('WP_DEBUG') && true === WP_DEBUG) {
-            error_log("get_tracking_code");
-            error_log(print_r($lc_post_tracking_code, true));
+            // error_log("get_tracking_code");
+            // error_log(print_r($lc_post_tracking_code, true));
         }
 
         $default_tracking_code = ' ';
@@ -1388,8 +1403,8 @@ class LeadConnector_Admin
 
             }
         } catch (Exception $e) {
-            error_log("failed to parse the tracking code");
-            error_log(print_r($e, true));
+            // error_log("failed to parse the tracking code");
+            // error_log(print_r($e, true));
 
         }
         return $default_tracking_code;

@@ -4,7 +4,7 @@ Tags: crm, lead connector
 Requires at least: 5.0
 Tested up to: 6.5.3
 Requires PHP: 5.6
-Stable tag: 2.0.5
+Stable tag: 3.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -46,7 +46,7 @@ The LeadConnector plugin helps you install the text to chat widget to your wordp
 == Changelog ==
 
 
-= 2.0.5- 2025-02-15 =
+= 3.0 - 2025-02-15 =
 * General Fix: Improved Cron Job Scheduling
 
 = 2.0.5- 2025-02-15 =

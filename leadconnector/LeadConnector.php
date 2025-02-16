@@ -16,7 +16,7 @@
  * Plugin Name:       LeadConnector
  * Plugin URI:        https://www.leadconnectorhq.com/wp_plugin
  * Description:       This plugin helps you to add the lead connector widgets to your website.
- * Version:           2.0.5
+ * Version:           3.0.1
  * Author:            LeadConnector
  * Author URI:        https://www.leadconnectorhq.com
  * License:           GPL-2.0+
@@ -35,25 +35,16 @@ if (!defined('WPINC')) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define('LEAD_CONNECTOR_VERSION', '2.0.5');
+define('LEAD_CONNECTOR_VERSION', '3.0.1');
 define('LEAD_CONNECTOR_PLUGIN_NAME', 'LeadConnector');
 
-// define('LEAD_CONNECTOR_SERVICES_BASE_URL', 'https://staging.services.leadconnectorhq.com/');
 define('LEAD_CONNECTOR_OPTION_NAME', 'lead_connector_plugin_options');
 define('LEAD_CONNECTOR_CDN_BASE_URL', 'https://widgets.leadconnectorhq.com/');
 
 // Production App 
 define('LEAD_CONNECTOR_OAUTH_CLIENT_ID', '6795e754aa3b9f3863f495eb-m6dbf7pz');
 define('LEAD_CONNECTOR_SERVICES_BASE_URL', 'https://services.leadconnectorhq.com/');
-// define('LEAD_CONNECTOR_OAUTH_CLIENT_ID', '66de8e254d78673a12df3ae9-m1j8cox4');
-// define('LEAD_CONNECTOR_OAUTH_CLIENT_SECRET', '44a347b2-e90f-4a8d-b946-67cc512ff159');
 define('LEAD_CONNECTOR_BASE_URL', 'https://rest.leadconnectorhq.com/');
-
-
-
-// Staging App
-// define('LEAD_CONNECTOR_BASE_URL', 'https://public-api-dot-highlevel-staging.appspot.com/');
-
 
 
 /**
