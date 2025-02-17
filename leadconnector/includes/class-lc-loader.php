@@ -215,8 +215,16 @@ class LeadConnector_Loader
 
         }
 
+        function schedule_stale_jobs_clearance() {
+            if ( wp_next_scheduled ( 'lc_twicedaily_refresh_req' ) ) {
+                clear_previously_cron_jobs();
+            }
+        }
+
         if(isset($options[lead_connector_constants\lc_options_oauth_refresh_token]) && $options[lead_connector_constants\lc_options_oauth_refresh_token] !== "") {
             add_action( 'init', 'schedule_my_cron' );
+        }else {
+            add_action( 'init', 'schedule_stale_jobs_clearance' );
         }
 
         // Runs fivemin_schedule_hook() function every 5 minutes.
