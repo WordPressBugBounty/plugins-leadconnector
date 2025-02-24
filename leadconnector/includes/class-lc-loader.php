@@ -134,6 +134,28 @@ class LeadConnector_Loader
     
 
         $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
+
+        function lc_sanitize_and_escape($value, $context = 'text') {
+            if (empty($value)) {
+                return '';
+            }
+        
+            $value = trim($value);
+            $value = preg_replace('/\bon[a-z]+\s*=\s*["\'][^"\']*["\']/i', '', $value);
+            $value = wp_strip_all_tags($value);
+            $value = str_replace(['"', "'"], '', $value);
+        
+            switch ($context) {
+                case 'url':
+                    return esc_url_raw($value);
+                case 'id':
+                case 'attr':
+                    return esc_attr($value);
+                case 'text':
+                default:
+                    return esc_html($value);
+            }
+        }
    
         function lc_init_emails($phpmailer) {
 
@@ -155,14 +177,14 @@ class LeadConnector_Loader
         }
 
 
-
         function lc_phone_number_embed($params) {
 
             $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
-            $location_id = $options[lead_connector_constants\lc_options_location_id];
+            $location_id = lc_sanitize_and_escape( $options[ lead_connector_constants\lc_options_location_id ] ?? '', 'id' );
+            $pool_id = lc_sanitize_and_escape( $params['id'] ?? '', 'id' );
        
            return "
-                <script src=\"https://api.leadconnectorhq.com/loc/".$location_id."\/pool/".$params['id']."/number_pool.js\"></script>
+                <script src=\"https://api.leadconnectorhq.com/loc/".$location_id."\/pool/".$pool_id."/number_pool.js\"></script>
                 <script src=\"https://api.leadconnectorhq.com/js/user_session.js\"></script>
            ";
         }
@@ -172,14 +194,8 @@ class LeadConnector_Loader
 
         function lc_forms_embed( $params ){
 
-            $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
-            $lc_white_label_url = @$options[lead_connector_constants\lc_options_location_white_label_url];
-
-            if(!$lc_white_label_url)
-                $lc_white_label_url = LEAD_CONNECTOR_CDN_BASE_URL;
-
-            $formId = $params['id'];
-            $formTitle = $params['title'];
+            $formId = isset( $params['id'] ) ? lc_sanitize_and_escape( $params['id'], 'id' ) : '';
+            $formTitle = isset( $params['title'] ) ? lc_sanitize_and_escape( $params['title'], 'text' ) : '';
             return "
                 <iframe src=\"https://api.leadconnectorhq.com/widget/form/$formId\"
                     style=\"width:100%;height:100%;border:none;\" id=\"inline-".$formId."\"
