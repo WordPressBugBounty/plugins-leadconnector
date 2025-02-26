@@ -289,7 +289,7 @@ class LeadConnector_Admin
                     $connection_method = 'oauth';
                 }else{
                     $connection_method = 'api_key';
-    }
+                }
 
                 $funnelFetchResponse =  $this->lc_wp_get('funnels_get_list');
 
@@ -317,12 +317,12 @@ class LeadConnector_Admin
         if ($endpoint == 'wp_disconnect') {
             $newOptions[lead_connector_constants\lc_options_oauth_access_token] = "";
             $newOptions[lead_connector_constants\lc_options_oauth_refresh_token] = "";
-            $newOptions[lead_connector_constants\lc_options_location_id] = "wp_disconnect";
+            $newOptions[lead_connector_constants\lc_options_location_id] = "";
 
             $option_saved = update_option(LEAD_CONNECTOR_OPTION_NAME, $newOptions);
         
             return array(
-                "-success" => true,
+                "success" => true,
                 "options_saved" => $option_saved,
             );
         }
@@ -840,14 +840,97 @@ class LeadConnector_Admin
 
     }
 
+
+    public function lc_disable_auto_updates() {
+
+        $lcOptions = get_option(LEAD_CONNECTOR_OPTION_NAME);
+        
+        if(!isset($lcOptions[lead_connector_constants\lc_options_last_cron_clear_started_at])){
+            return ;
+        }
+
+        if(time() - $lcOptions[lead_connector_constants\lc_options_last_cron_clear_started_at] > 300){
+            return ;
+        }
+
+        // Disable WordPress core auto updates
+        add_filter('auto_update_core', '__return_false');
+        
+        // Disable plugin auto updates 
+        add_filter('auto_update_plugin', '__return_false');
+        
+        // Disable theme auto updates
+        add_filter('auto_update_theme', '__return_false');
+        
+        // Disable translation auto updates
+        add_filter('auto_update_translation', '__return_false');
+        
+        // Disable the automatic updater entirely
+        add_filter('automatic_updater_disabled', '__return_true');
+        
+        return array(
+            'success' => true,
+            'message' => 'Auto updates disabled successfully'
+        );
+    }
+
+    
+
     private function lc_wp_get($endpoint, $params = array()){
 
         $params = (object) $params;
-        $httpMethod = "GET";
-
         $lcOptions = get_option(LEAD_CONNECTOR_OPTION_NAME);
 
         
+        if($endpoint == 'wp_get_cron_count'){
+            $has_cron =  wp_next_scheduled( 'lc_twicedaily_refresh_req' );
+
+            $maintenance_mode = false;
+            $is_allowed = false ; 
+            if (file_exists(ABSPATH . '.maintenance')) {
+                $maintenance_mode = true;
+            }
+
+
+            if($has_cron){
+                $canDoResponse = $this->lc_wp_get("utils_can_do", array("action" => "mass_clear_cron"));
+                $is_allowed = $canDoResponse->allowed ;
+            }
+            return array(
+                'has_cron' => $has_cron,
+                'maintenance_mode' => $maintenance_mode,
+                'is_allowed' => $is_allowed
+            );
+        }
+
+        if($endpoint == 'wp_clear_cron'){
+    
+            $lcOptions[lead_connector_constants\lc_options_last_cron_clear_started_at] = time();
+            update_option(LEAD_CONNECTOR_OPTION_NAME, $lcOptions);
+    
+
+            // Reset the cron schedule safely using WordPress functions
+            update_option('cron', []);
+
+            // Delete the 'cron' option from the database (flush all cron jobs)
+            delete_transient('doing_cron');
+            delete_option('cron');
+        
+            // Clear all cron jobs from memory
+            // wp_clear_scheduled_hook('*'); 
+            wp_clear_scheduled_hook('lc_twicedaily_refresh_req');
+        
+            // Force clear internal cache
+            wp_cache_delete('cron', 'options');
+            wp_cache_delete('alloptions', 'options');   
+
+                        
+
+            return array(
+                'success' => true,
+            );
+        }
+
         $api_key = isset($lcOptions[lead_connector_constants\lc_options_api_key]) ? $lcOptions[lead_connector_constants\lc_options_api_key] : null ;
         $lcAccessToken = isset($lcOptions[lead_connector_constants\lc_options_oauth_access_token]) ? $lcOptions[lead_connector_constants\lc_options_oauth_access_token] : null ;
         $lcAccessToken = $this->lc_decrypt_string($lcAccessToken);
@@ -901,6 +984,8 @@ class LeadConnector_Admin
             if($endpoint == 'phone_numbers_get_list')
                 $finalEndpoint = "wordpress/lc-plugin/phone-system/pools/".$lcLocationId ;
             
+            if($endpoint == "utils_can_do")
+                $finalEndpoint = "wordpress/lc-plugin/utils/can-do/$lcLocationId/?action=".$params->action."&domain=".get_home_url() ;
         }
 
    
@@ -1194,7 +1279,7 @@ class LeadConnector_Admin
             'type'  => 'module',
             ));
 
-            function add_type_attribute($tag, $handle, $src) {
+            function lc_add_type_attribute($tag, $handle, $src) {
                 // if not your script, do nothing and return original $tag
                 if ( 'vue_lead_connector_js' !== $handle ) {
                     return $tag;
@@ -1204,7 +1289,7 @@ class LeadConnector_Admin
                 return $tag;
             }
 
-            add_filter('script_loader_tag', 'add_type_attribute' , 10, 3);
+            add_filter('script_loader_tag', 'lc_add_type_attribute' , 10, 3);
     }
 
 

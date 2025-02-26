@@ -210,42 +210,21 @@ class LeadConnector_Loader
 
         add_shortcode('lc_form', 'lc_forms_embed');
 
-
-
-        function clear_previously_cron_jobs() {
-            $hook_name = 'lc_twicedaily_refresh_req'; // Replace with your actual cron hook name
-            while ( $timestamp = wp_next_scheduled( $hook_name ) ) {
-                wp_unschedule_event( $timestamp, $hook_name );
-            }
-        }
-
-        function schedule_my_cron(){
+        function schedule_oauth_refresh_cron(){
             // Schedules the event if it's NOT already scheduled.
             if ( ! wp_next_scheduled ( 'lc_twicedaily_refresh_req_v2' ) ) {
                 wp_schedule_event( time(), 'twicedaily', 'lc_twicedaily_refresh_req_v2' );
             }
 
-            if ( wp_next_scheduled ( 'lc_twicedaily_refresh_req' ) ) {
-                clear_previously_cron_jobs();
-            }
-
         }
 
-        function schedule_stale_jobs_clearance() {
-            if ( wp_next_scheduled ( 'lc_twicedaily_refresh_req' ) ) {
-                clear_previously_cron_jobs();
-            }
-        }
 
         if(isset($options[lead_connector_constants\lc_options_oauth_refresh_token]) && $options[lead_connector_constants\lc_options_oauth_refresh_token] !== "") {
-            add_action( 'init', 'schedule_my_cron' );
-        }else {
-            add_action( 'init', 'schedule_stale_jobs_clearance' );
+            add_action( 'init', 'schedule_oauth_refresh_cron' );
         }
 
-        // Runs fivemin_schedule_hook() function every 5 minutes.
-        $plugin_name =  $this->plugin_name;
-        $plugin_version = $this->version;
+        $plugin_name =  LEAD_CONNECTOR_PLUGIN_NAME;
+        $plugin_version = LEAD_CONNECTOR_VERSION;
         $oauth_refresh_schedule_hook = function() use ($plugin_name, $plugin_version) {
 
             $lcAdmin = new LeadConnector_Admin(

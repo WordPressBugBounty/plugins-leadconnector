@@ -16,6 +16,7 @@ const lc_options_location_white_label_url = "location_white_label_url";
 const lc_options_oauth_authorization_code = "oauth_authorization_code";
 const lc_options_oauth_access_token = 'oauth_access_token';
 const lc_options_oauth_refresh_token = 'oauth_refresh_token';
+const lc_options_last_cron_clear_started_at = 'last_cron_clear_started_at';
 
 const lc_options_email_smtp_enabled = 'lc_email_smtp_enabled';
 const lc_options_email_smtp_email = 'lc_email_smtp_email';
