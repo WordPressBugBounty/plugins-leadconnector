@@ -24,7 +24,7 @@ const lc_options_email_smtp_port = 'lc_email_smtp_port';
 const lc_options_email_smtp_server = 'lc_email_smtp_server';
 const lc_options_email_smtp_password = 'lc_email_smtp_password';
 const lc_options_email_smtp_provider = 'lc_email_smtp_provider';
-
+const lc_options_selected_chat_widget_id = 'selected_chat_widget_id';
 
 
 
@@ -35,3 +35,5 @@ const lc_rest_api_direct_endpoint_param = "direct_endpoint";
 const lc_rest_api_data_param = "data";
 
 const lc_custom_post_type = "lc_funnels";
+
+const LC_BASE_URL = "https://app.leadconnectorhq.com/v2"; 

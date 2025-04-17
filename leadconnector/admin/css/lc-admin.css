@@ -11,3 +11,11 @@
   background-image: url("../images/icon.png");
   background-repeat: no-repeat;
 }
+
+/**
+  * Hide the sub menu items
+  * did to hide menu items created by default wordpress behavior
+*/
+#toplevel_page_lc-plugin a[href*="lc-li-sub-itemContacts"]{
+  display: none !important;
+}

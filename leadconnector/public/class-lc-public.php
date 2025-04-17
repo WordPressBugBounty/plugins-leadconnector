@@ -125,16 +125,27 @@ class LeadConnector_Public
 
             $use_email_field = "0";
             $chat_widget_settings = null;
+            $usingOldWidget = true;
             if (isset($options[lead_connector_constants\lc_options_text_widget_settings])) {
                 $chat_widget_settings = json_decode($options[lead_connector_constants\lc_options_text_widget_settings]);
+                if(!isset($options[lead_connector_constants\lc_options_selected_chat_widget_id])){
+                    // Save Option Here
+                    $options[lead_connector_constants\lc_options_selected_chat_widget_id] = $chat_widget_settings->widgetId;
+                    update_option(LEAD_CONNECTOR_OPTION_NAME, $options);
+                }
             }
             if (isset($options[lead_connector_constants\lc_options_text_widget_use_email_filed])) {
                 $use_email_field = esc_attr($options[lead_connector_constants\lc_options_text_widget_use_email_filed]);
             }
-            wp_enqueue_script($this->plugin_name . ".lc_text_widget", LEAD_CONNECTOR_CDN_BASE_URL . 'loader.js', '', $this->version, false);
-            wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/lc-public.js', array('jquery'), $this->version, false);
-            wp_localize_script($this->plugin_name, 'lc_public_js',
-                array(
+            
+            if(isset($options[lead_connector_constants\lc_options_selected_chat_widget_id])){
+                $usingOldWidget = false;
+            }
+
+            if($usingOldWidget){
+                wp_enqueue_script($this->plugin_name . ".lc_text_widget", LEAD_CONNECTOR_CDN_BASE_URL . 'loader.js', '', $this->version, false);
+                wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/lc-public.js', array('jquery'), $this->version, false);
+                wp_localize_script($this->plugin_name, 'lc_public_js',array(
                     'text_widget_location_id' => $location_id,
                     'text_widget_heading' => $heading,
                     'text_widget_sub_heading' => $sub_heading,
@@ -143,6 +154,32 @@ class LeadConnector_Public
                     "text_widget_settings" => $chat_widget_settings,
                     "text_widget_cdn_base_url" => LEAD_CONNECTOR_CDN_BASE_URL,
                 ));
+            }
+            else{
+                if(isset($options[lead_connector_constants\lc_options_selected_chat_widget_id])){
+                    
+                    $widgetId = $options[lead_connector_constants\lc_options_selected_chat_widget_id];
+                    $widget_code = '<script 
+                        src="' . LC_CHAT_WIDGET_SRC . '"
+                        data-resources-url="' . LC_CHAT_WIDGET_RESOURCES_URL . '"
+                        data-widget-id="' . $widgetId . '"
+                        data-server-u-r-l="' . LC_CHAT_WIDGET_SERVER_URL . '"
+                        data-marketplace-u-r-l="' . LC_CHAT_WIDGET_MARKETPLACE_URL . '">
+                    </script>';
+                    // Add the widget code to wp_head for loading on all public pages
+                    add_action('wp_head', function() use ($widget_code) {
+                        echo wp_kses($widget_code, array(
+                            'script' => array(
+                                'src' => array(),
+                                'data-resources-url' => array(),
+                                'data-widget-id' => array(), 
+                                'data-server-u-r-l' => array(),
+                                'data-marketplace-u-r-l' => array()
+                            )
+                        ));
+                    });
+                }
+            }
         }
 
     }

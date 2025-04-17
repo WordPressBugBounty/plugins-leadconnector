@@ -32,7 +32,14 @@ class LeadConnector_Deactivator
      */
     public static function deactivate()
     {
-
+        // Aman - Pendo Event
+        $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
+        if(isset($options[lead_connector_constants\lc_options_location_id])){
+            $event = new PendoEvent("WORDPRESS LC PLUGIN DEACTIVATED", [
+                "locationId" => $options[lead_connector_constants\lc_options_location_id],
+            ]);
+            $event->send();
+        }
     }
 
 }
