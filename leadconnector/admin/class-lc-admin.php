@@ -1717,6 +1717,26 @@ class LeadConnector_Admin
         </html>';
     }
 
+    public function get_page_iframe_native($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon)
+    {
+        // Check if funnel step URL is from allowed domain
+        $funnel_host = parse_url($funnel_step_url, PHP_URL_HOST);
+        if ($funnel_host !== 'app.leadconnectorhq.com') {
+            return sprintf(
+                'Error: Invalid funnel step URL domain. Expected app.leadconnectorhq.com but got %s',
+                esc_html($funnel_host)
+            );
+        }
+        $response = wp_remote_get($funnel_step_url);
+        $iframe_content = '';
+
+        if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+            $iframe_content = wp_remote_retrieve_body($response);
+            return $iframe_content;
+        }
+        return '';
+    }
+
     public function process_page_request()
     {
 
@@ -1748,13 +1768,20 @@ class LeadConnector_Admin
                 $lc_include_tracking_code = get_post_meta($post_id, "lc_include_tracking_code", true);
                 $lc_use_site_favicon = get_post_meta($post_id, "lc_use_site_favicon", true);
 
+
                 if (!$lc_include_tracking_code) {
                     $lc_step_trackingCode = null;
                     $lc_funnel_tracking_code = null;
                 }
 
-                if ($lc_display_method == "iframe") {
-                    $content = $this->get_page_iframe($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon);
+                if ($lc_display_method == "iframe" || $lc_display_method == "native") {
+
+                    if ($lc_display_method == "native") {
+                        $content = $this->get_page_iframe_native($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon);
+                    } else {
+                        $content = $this->get_page_iframe($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon);
+                    }
+
                     $allowed_html = array(
                         'head' => array(),
                         'style' => array(),
@@ -1784,7 +1811,15 @@ class LeadConnector_Admin
                         )
                     );
                     // echo $content;
-                    echo wp_kses($content, $allowed_html);
+
+                    if ($lc_display_method == "native") {
+                        
+                        // Outputting unescaped HTML from a trusted internal source.please check function get_page_iframe_native it has restriction that the host should be app.leadconnectorhq.com
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted internal HTML source
+                        echo $content;
+                    } else {
+                        echo wp_kses($content, $allowed_html);
+                    }
                 } else {
                     wp_redirect($funnel_step_url, 301);
                 }

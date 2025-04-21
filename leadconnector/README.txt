@@ -2,9 +2,9 @@
 link: https://www.leadconnectorhq.com
 Tags: crm, lead connector
 Requires at least: 5.0
-Tested up to: 6.5.3
+Tested up to: 6.7
 Requires PHP: 5.6
-Stable tag: 3.0.6
+Stable tag: 3.0.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,7 +45,10 @@ The LeadConnector plugin helps you install the text to chat widget to your wordp
 
 == Changelog ==
 
-= 3.0.6 - 2025-02-26 =
+= 3.0.7 - 2025-04-15 =
+* Enhancement: Added Support for embedding funnels bia Native HTML ( This now allows usage of order forms via funnels in WordPress )
+
+= 3.0.6 - 2025-04-15 =
 * Enhancement: Enabled Support for Multiple Chat Widgets
 
 = 3.0.4 - 2025-02-26 =
