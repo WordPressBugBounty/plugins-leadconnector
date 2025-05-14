@@ -34,13 +34,20 @@ class LeadConnector_i18n
      */
     public function load_plugin_textdomain()
     {
+        add_action('init', array($this, 'load_textdomain'));
+    }
 
+    /**
+     * Actually load the text domain at init hook.
+     *
+     * @since    3.0.7
+     */
+    public function load_textdomain()
+    {
         load_plugin_textdomain(
-            'LeadConnector',
+            'leadconnector',
             false,
             dirname(dirname(plugin_basename(__FILE__))) . '/languages/'
         );
-
     }
-
 }

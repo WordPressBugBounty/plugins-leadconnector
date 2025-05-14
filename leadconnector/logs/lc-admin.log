@@ -1,0 +1,194 @@
+[2025-02-28 09:13:37] [INFO] Disconnecting from Pendo
+[2025-02-28 09:13:37] [INFO] 6cjCoMnfSSkCXs6S1BirLC_PLUGIN_DISCONNECTED Array
+(
+    [locationId] => 6cjCoMnfSSkCXs6S1Bir
+)
+
+[2025-02-28 09:13:37] [INFO] Sending Request to: https://staging.services.leadconnectorhq.com/wordpress/lc-plugin/pendo/track/6cjCoMnfSSkCXs6S1Bir
+[2025-02-28 09:13:37] [INFO] Request Arguments: Array
+(
+    [timeout] => 60
+    [headers] => Array
+        (
+            [Authorization] => Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoQ2xhc3MiOiJMb2NhdGlvbiIsImF1dGhDbGFzc0lkIjoiNmNqQ29NbmZTU2tDWHM2UzFCaXIiLCJzb3VyY2UiOiJJTlRFR1JBVElPTiIsInNvdXJjZUlkIjoiNjcwNTQwN2QxODMwMTRmODA0NjJkOWYxLW0yMGtkeXB2IiwiY2hhbm5lbCI6Ik9BVVRIIiwicHJpbWFyeUF1dGhDbGFzc0lkIjoiNmNqQ29NbmZTU2tDWHM2UzFCaXIiLCJvYXV0aE1ldGEiOnsic2NvcGVzIjpbImZ1bm5lbHMvZnVubmVsLnJlYWRvbmx5IiwiZnVubmVscy9wYWdlLnJlYWRvbmx5Iiwid29yZHByZXNzLnNpdGUucmVhZG9ubHkiXSwiY2xpZW50IjoiNjcwNTQwN2QxODMwMTRmODA0NjJkOWYxIiwiY2xpZW50S2V5IjoiNjcwNTQwN2QxODMwMTRmODA0NjJkOWYxLW0yMGtkeXB2In0sImlhdCI6MTc0MDczMzkwOC42NzksImV4cCI6MTc0MDgyMDMwOC42Nzl9.c3_JBsnLdzhxjKzMfOl59p4Abtk7PnUTm66iIod6Lsh4FSHRyXRRLJ2C4oJuO1WjltrbO3_hsbHp7pFDCE3YNxlpPvK8UxP4S02hpYeFh7IFiYHYxSx7ewDAFGUIFIuJZgPI_47Sjcd8S8VnM09HzGFrhfQeqB9jUGhOsdU0tk-3RGtrGVEnrbPh5aZNtA2DYqhf-X7oFOQ3JEHAfY4gJXjqjiiJfOrx87lbiOhtq0NZ91eTc2oeY6QfSIcQsBV33y0KrOTmzS2RplHfvLGNx9SHYxC2vJn9qsAbtHyKBiCSbIV3StOHsHwNbV6FiWQxyT0RAf4B945ZaCJdeL-SxUIok4BlVqLgGgP1rBCijpVKw2sQ9C92aXjgjm31T62xK2oWkrOsdZEWZgIuDWniWQd16uMuWj0u_hS8XNWywecHC5AzgYtD5tZAOPfQGOZrdF-Zr6XHvXveed_-IakAeT1MzBHa-PVAkXj2awXdwtLAUy1LKI-GSMr-MnawwjF6jR8bbBC1xGasnbIrJrwP15jKyinM0JOd_V6PfYu5Rx3w8CVd3s4FDW0IVlDdtKpnTCH2CnMS6dui_AqWslIT9NC3Vn70HaFDk6R4jKuXmpRWfSJwMdYt6V-E7S74YeIaZeOkp4H1HgkYlAzljNBcKjk3Pyx2lX_H3cUrOvotsC4
+            [Accept] => application/json
+            [version] => 2021-04-15
+            [X-LC-Version] => 3.0.5
+            [developer_version] => lc-plugin-basic-pendo-events
+            [channel] => OAUTH
+            [content-type] => application/json
+        )
+
+    [body] => {"eventName":"LC_PLUGIN_DISCONNECTED","eventAttributes":{"locationId":"6cjCoMnfSSkCXs6S1Bir","remote_ip":"127.0.0.1","host":"lead-connector-latest.local"},"accountId":"6cjCoMnfSSkCXs6S1Bir"}
+)
+
+[2025-02-28 09:13:38] [INFO] Response Code: 201
+[2025-02-28 09:13:38] [INFO] Response: Array
+(
+    [headers] => WpOrg\Requests\Utility\CaseInsensitiveDictionary Object
+        (
+            [data:protected] => Array
+                (
+                    [date] => Fri, 28 Feb 2025 09:13:38 GMT
+                    [content-type] => application/json; charset=utf-8
+                    [content-length] => 55
+                    [x-powered-by] => Express
+                    [access-control-allow-origin] => *
+                    [etag] => W/"37-w9tXEBlNHa0uW5Dehq/FayJQlLw"
+                    [vary] => Accept-Encoding
+                    [x-envoy-upstream-service-time] => 69
+                    [strict-transport-security] => max-age=31536000
+                    [cf-cache-status] => DYNAMIC
+                    [server] => cloudflare
+                    [cf-ray] => 918f4cbbbcdb47bd-BOM
+                )
+
+        )
+
+    [body] => {"success":true,"message":"Event tracked successfully"}
+    [response] => Array
+        (
+            [code] => 201
+            [message] => Created
+        )
+
+    [cookies] => Array
+        (
+        )
+
+    [filename] => 
+    [http_response] => WP_HTTP_Requests_Response Object
+        (
+            [data] => 
+            [headers] => 
+            [status] => 
+            [response:protected] => WpOrg\Requests\Response Object
+                (
+                    [body] => {"success":true,"message":"Event tracked successfully"}
+                    [raw] => HTTP/1.1 201 Created
+Date: Fri, 28 Feb 2025 09:13:38 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 55
+Connection: close
+x-powered-by: Express
+access-control-allow-origin: *
+etag: W/"37-w9tXEBlNHa0uW5Dehq/FayJQlLw"
+vary: Accept-Encoding
+x-envoy-upstream-service-time: 69
+strict-transport-security: max-age=31536000
+cf-cache-status: DYNAMIC
+Server: cloudflare
+CF-RAY: 918f4cbbbcdb47bd-BOM
+
+{"success":true,"message":"Event tracked successfully"}
+                    [headers] => WpOrg\Requests\Response\Headers Object
+                        (
+                            [data:protected] => Array
+                                (
+                                    [date] => Array
+                                        (
+                                            [0] => Fri, 28 Feb 2025 09:13:38 GMT
+                                        )
+
+                                    [content-type] => Array
+                                        (
+                                            [0] => application/json; charset=utf-8
+                                        )
+
+                                    [content-length] => Array
+                                        (
+                                            [0] => 55
+                                        )
+
+                                    [x-powered-by] => Array
+                                        (
+                                            [0] => Express
+                                        )
+
+                                    [access-control-allow-origin] => Array
+                                        (
+                                            [0] => *
+                                        )
+
+                                    [etag] => Array
+                                        (
+                                            [0] => W/"37-w9tXEBlNHa0uW5Dehq/FayJQlLw"
+                                        )
+
+                                    [vary] => Array
+                                        (
+                                            [0] => Accept-Encoding
+                                        )
+
+                                    [x-envoy-upstream-service-time] => Array
+                                        (
+                                            [0] => 69
+                                        )
+
+                                    [strict-transport-security] => Array
+                                        (
+                                            [0] => max-age=31536000
+                                        )
+
+                                    [cf-cache-status] => Array
+                                        (
+                                            [0] => DYNAMIC
+                                        )
+
+                                    [server] => Array
+                                        (
+                                            [0] => cloudflare
+                                        )
+
+                                    [cf-ray] => Array
+                                        (
+                                            [0] => 918f4cbbbcdb47bd-BOM
+                                        )
+
+                                )
+
+                        )
+
+                    [status_code] => 201
+                    [protocol_version] => 1.1
+                    [success] => 1
+                    [redirects] => 0
+                    [url] => https://staging.services.leadconnectorhq.com/wordpress/lc-plugin/pendo/track/6cjCoMnfSSkCXs6S1Bir
+                    [history] => Array
+                        (
+                        )
+
+                    [cookies] => WpOrg\Requests\Cookie\Jar Object
+                        (
+                            [cookies:protected] => Array
+                                (
+                                )
+
+                        )
+
+                )
+
+            [filename:protected] => 
+        )
+
+)
+
+[2025-02-28 09:13:38] [INFO] Success: 201
+[2025-02-28 09:13:38] [INFO] Response: stdClass Object
+(
+    [success] => 1
+    [message] => Event tracked successfully
+)
+
+[2025-02-28 09:13:38] [INFO] Pendo Event Response: Array
+(
+    [error] => 
+    [http_code] => 201
+    [body] => stdClass Object
+        (
+            [success] => 1
+            [message] => Event tracked successfully
+        )
+
+)
+

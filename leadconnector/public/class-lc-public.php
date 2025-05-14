@@ -159,24 +159,17 @@ class LeadConnector_Public
                 if(isset($options[lead_connector_constants\lc_options_selected_chat_widget_id])){
                     
                     $widgetId = $options[lead_connector_constants\lc_options_selected_chat_widget_id];
-                    $widget_code = '<script 
-                        src="' . LC_CHAT_WIDGET_SRC . '"
-                        data-resources-url="' . LC_CHAT_WIDGET_RESOURCES_URL . '"
-                        data-widget-id="' . $widgetId . '"
-                        data-server-u-r-l="' . LC_CHAT_WIDGET_SERVER_URL . '"
-                        data-marketplace-u-r-l="' . LC_CHAT_WIDGET_MARKETPLACE_URL . '">
-                    </script>';
                     // Add the widget code to wp_head for loading on all public pages
-                    add_action('wp_head', function() use ($widget_code) {
-                        echo wp_kses($widget_code, array(
-                            'script' => array(
-                                'src' => array(),
-                                'data-resources-url' => array(),
-                                'data-widget-id' => array(), 
-                                'data-server-u-r-l' => array(),
-                                'data-marketplace-u-r-l' => array()
-                            )
-                        ));
+                    add_action('wp_head', function() use ($widgetId) {
+                        // Using proper WordPress functions to output scripts safely
+                        echo sprintf(
+                            '<script src="%s" data-resources-url="%s" data-widget-id="%s" data-server-u-r-l="%s" data-marketplace-u-r-l="%s"></script>',
+                            esc_url(LC_CHAT_WIDGET_SRC),
+                            esc_url(LC_CHAT_WIDGET_RESOURCES_URL),
+                            esc_attr($widgetId),
+                            esc_url(LC_CHAT_WIDGET_SERVER_URL),
+                            esc_url(LC_CHAT_WIDGET_MARKETPLACE_URL)
+                        );
                     });
                 }
             }

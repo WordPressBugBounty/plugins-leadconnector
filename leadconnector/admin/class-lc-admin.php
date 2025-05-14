@@ -306,10 +306,14 @@ class LeadConnector_Admin
             $event = new PendoEvent("WORDPRESS LC PLUGIN DISCONNECTED", [
                 "locationId" => $options[lead_connector_constants\lc_options_location_id],
             ]);
+            
             $event->send();
-            $newOptions[lead_connector_constants\lc_options_oauth_access_token] = "";
-            $newOptions[lead_connector_constants\lc_options_oauth_refresh_token] = "";
-            $newOptions[lead_connector_constants\lc_options_location_id] = "";
+            // Reset All Options
+            $newOptions = array();
+
+            // $newOptions[lead_connector_constants\lc_options_oauth_access_token] = "";
+            // $newOptions[lead_connector_constants\lc_options_oauth_refresh_token] = "";
+            // $newOptions[lead_connector_constants\lc_options_location_id] = "";
 
             $option_saved = update_option(LEAD_CONNECTOR_OPTION_NAME, $newOptions);
 
@@ -1040,11 +1044,16 @@ class LeadConnector_Admin
     /**
      * Encrypts a string using WordPress salt and key
      * @since    1.0.0
-     * @param    string    $string    String to encrypt
+     * @param    string|object    $string    String or object to encrypt
      * @return   string    Encrypted string
      */
     private function lc_encrypt_string($string)
     {
+        // Convert objects to JSON string before encryption
+        if (is_object($string) || is_array($string)) {
+            $string = json_encode($string);
+        }
+        
         $encryption = new LC_Data_Encryption();
         return $encryption->encrypt($string);
     }
@@ -1719,14 +1728,28 @@ class LeadConnector_Admin
 
     public function get_page_iframe_native($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon)
     {
+
         // Check if funnel step URL is from allowed domain
         $funnel_host = parse_url($funnel_step_url, PHP_URL_HOST);
+        $is_whitelabeled = false;
+
+        if (strpos($funnel_host, 'leadconnectorhq.com') !== false) {
+            $is_whitelabeled = true;
+        }
+
+        // Change the host to app.leadconnectorhq.com if it's whitelabeled
+        if ($is_whitelabeled) {
+            $funnel_step_url = str_replace($funnel_host, 'app.leadconnectorhq.com', $funnel_step_url);
+        }
+
+        // Old Code Do not remove
         if ($funnel_host !== 'app.leadconnectorhq.com') {
             return sprintf(
                 'Error: Invalid funnel step URL domain. Expected app.leadconnectorhq.com but got %s',
                 esc_html($funnel_host)
             );
         }
+
         $response = wp_remote_get($funnel_step_url);
         $iframe_content = '';
 

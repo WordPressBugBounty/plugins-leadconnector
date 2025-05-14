@@ -3,7 +3,7 @@
 
 class LC_Menu_Handler{
     // Default Domain Name for translation
-    private $default_domain_name = 'LeadConnector';
+    private $default_domain_name = 'leadconnector';
     // Default Plugin Name
     private $plugin_display_name = LEAD_CONNECTOR_DISPLAY_NAME;
     // Default Slug for the Plugin
@@ -81,7 +81,7 @@ class LC_Menu_Handler{
                 'icon' => $this->Icons['dashicons-dashboard'],
                 'position' => 10,
                 'is_external' => true,
-                'external_link' => lead_connector_constants\LC_BASE_URL . "/location/{$this->locationId}/contacts/smart_list/All"
+                'external_link' => lead_connector_constants\LC_BASE_URL . "/location/".self::$locationId."/contacts/smart_list/All"
             ),
         );
     }
@@ -93,12 +93,12 @@ class LC_Menu_Handler{
         // Store Location Id
         $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
         if (!isset($options[lead_connector_constants\lc_options_location_id])) {
-            $this->locationId = null;
+            self::$locationId = null;
             $this->render_sub_menu_items = false;
         }
         else{
-            $this->locationId = $options[lead_connector_constants\lc_options_location_id];
-            if($this->locationId !== ''){
+            self::$locationId = $options['location_id'];
+            if(self::$locationId !== ''){
                 $this->render_sub_menu_items = true;
             }
         }

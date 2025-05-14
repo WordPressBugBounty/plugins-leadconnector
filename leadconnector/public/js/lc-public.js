@@ -55,7 +55,6 @@
     ) {
       var textWidgetSettings = lc_public_js.text_widget_settings;
       var allAttrs = Object.keys(textWidgetSettings);
-      
       for (var attrIndex = allAttrs.length - 1; attrIndex >= 0; attrIndex--) {
         try {
           var attributeName = allAttrs[attrIndex];
@@ -72,7 +71,6 @@
               attributeValue;
           }
         } catch (e) {
-          console.log(e, "Fail to parse settings");
           continue;
         }
 
@@ -93,6 +91,7 @@
         lc_public_js.text_widget_use_email_field == "1" ? "true" : "false"
       );
     }
+    
     document.body.appendChild(textWidget);
     if (!!lc_public_js.text_widget_cdn_base_url) {
       setTimeout(() => {

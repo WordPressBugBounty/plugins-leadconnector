@@ -15,11 +15,11 @@
  * A singleton class that handles logging of errors, warnings, and info messages
  * to a log file with proper formatting.
  */
-class Logger {
+class LeadConnector_Logger {
     /**
      * The single instance of the class.
      *
-     * @var Logger|null
+     * @var LeadConnector_Logger|null
      */
     private static $instance = null;
 
@@ -59,7 +59,7 @@ class Logger {
     /**
      * Get the singleton instance.
      *
-     * @return Logger The singleton instance.
+     * @return LeadConnector_Logger The singleton instance.
      */
     public static function get_instance() {
         if (self::$instance === null) {
