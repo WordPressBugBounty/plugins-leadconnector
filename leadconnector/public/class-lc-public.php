@@ -128,10 +128,12 @@ class LeadConnector_Public
             $usingOldWidget = true;
             if (isset($options[lead_connector_constants\lc_options_text_widget_settings])) {
                 $chat_widget_settings = json_decode($options[lead_connector_constants\lc_options_text_widget_settings]);
-                if(!isset($options[lead_connector_constants\lc_options_selected_chat_widget_id])){
-                    // Save Option Here
-                    $options[lead_connector_constants\lc_options_selected_chat_widget_id] = $chat_widget_settings->widgetId;
-                    update_option(LEAD_CONNECTOR_OPTION_NAME, $options);
+                if (!isset($options[lead_connector_constants\lc_options_selected_chat_widget_id])) {
+                    if ($chat_widget_settings && isset($chat_widget_settings->widgetId)) {
+                        // Save Option Here
+                        $options[lead_connector_constants\lc_options_selected_chat_widget_id] = $chat_widget_settings->widgetId;
+                        update_option(LEAD_CONNECTOR_OPTION_NAME, $options);
+                    }
                 }
             }
             if (isset($options[lead_connector_constants\lc_options_text_widget_use_email_filed])) {

@@ -97,7 +97,7 @@ class LC_Menu_Handler{
             $this->render_sub_menu_items = false;
         }
         else{
-            self::$locationId = $options['location_id'];
+            self::$locationId = $options[lead_connector_constants\lc_options_location_id];
             if(self::$locationId !== ''){
                 $this->render_sub_menu_items = true;
             }
