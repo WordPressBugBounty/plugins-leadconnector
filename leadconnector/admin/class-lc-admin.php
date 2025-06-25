@@ -59,6 +59,211 @@ class LeadConnector_Admin
 
         $this->plugin_name = $plugin_name;
         $this->version = $version;
+        
+        // Replace admin bar notification with admin notice banner
+        add_action('admin_notices', array($this, 'display_payment_failed_banner'));
+        add_action('admin_head', array($this, 'add_payment_notification_styles'));
+        
+        // Ensure dashicons are loaded in frontend for non-admin users
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_dashicons'));
+    }
+
+    /**
+     * Display a payment failed banner at the top of all admin pages
+     *
+     * @since    1.0.0
+     */
+    public function display_payment_failed_banner()
+    {
+        // Only display the banner if LC_PAYMENT_FAILED is defined and true
+        if (!defined('LC_PAYMENT_FAILED') || LC_PAYMENT_FAILED !== true) {
+            return;
+        }
+        
+        // Get domain and location ID from constants, or use defaults
+        $company_domain = defined('LC_COMPANY_DOMAIN') ? LC_COMPANY_DOMAIN : 'app.leadconnectorhq.com';
+        $location_id = defined('LC_LOCATION_ID') ? LC_LOCATION_ID : '';
+        
+        // Build the payment URL
+        $payment_url = $company_domain . '/v2/location/' . $location_id . '/wordpress/dashboard';
+        
+        // Add https:// if not included in the domain
+        if (strpos($payment_url, 'http') !== 0) {
+            $payment_url = 'https://' . $payment_url;
+        }
+        
+        ?>
+        <div class="lc-payment-notice-wrapper">
+            <div class="lc-payment-notice">
+                <div class="lc-payment-notice-icon">
+                    <img src="https://storage.googleapis.com/preview-production-assets/wordpress/lc-warning-icon.svg" alt="Warning" />
+                </div>
+                <div class="lc-payment-notice-message">
+                    Your recent payment has failed. Please update your billing information.
+                </div>
+                <div class="lc-payment-notice-actions">
+                    <a href="<?php echo esc_url($payment_url); ?>" target="_blank" class="lc-update-button">
+                        Update Payment Information
+                    </a>
+                    <button type="button" class="lc-dismiss-button">
+                        <span class="dashicons dashicons-no-alt"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+                const dismissButton = document.querySelector('.lc-dismiss-button');
+                if (dismissButton) {
+                    dismissButton.addEventListener('click', function() {
+                        const banner = document.querySelector('.lc-payment-notice-wrapper');
+                        if (banner) {
+                            banner.style.display = 'none';
+                        }
+                    });
+                }
+            });
+        </script>
+        <?php
+    }
+
+    /**
+     * Ensure dashicons are loaded for non-admin users
+     */
+    public function enqueue_dashicons() {
+        wp_enqueue_style('dashicons');
+    }
+
+    /**
+     * Add styles for the payment notification
+     *
+     * @since    1.0.0
+     */
+    public function add_payment_notification_styles()
+    {
+        ?>
+        <style type="text/css">
+            /* Payment failed notification banner - Matching design */
+            .lc-payment-notice-wrapper {
+                width: 100%;
+                position: relative;
+                display: flex;
+                padding-right: 100px;
+                border: none;
+                outline: none;
+            }
+            
+            .lc-payment-notice {
+                display: flex;
+                align-items: center;
+                padding: 15px 20px;
+                flex-grow: 1;
+                width: 100%;
+                background-color: #FFFCF5 !important;
+                margin-right: 20px;
+                border: none;
+                outline: none;
+            }
+            
+            .lc-payment-notice-icon {
+                margin-right: 15px;
+                border: none;
+                outline: none;
+                display: flex;
+                align-items: center;
+            }
+            
+            .lc-payment-notice-icon img {
+                width: 24px;
+                height: 24px;
+                outline: none;
+                border: none;
+            }
+            
+            .lc-payment-notice-message {
+                flex: 1;
+                font-size: 14px;
+                color: #B54708 !important;
+                font-weight: 500;
+                border: none;
+                outline: none;
+            }
+            
+            .lc-payment-notice-actions {
+                display: flex;
+                align-items: center;
+                border: none;
+                outline: none;
+            }
+            
+            .lc-update-button {
+                background-color: #d35400;
+                color: #ffffff;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-size: 14px;
+                cursor: pointer;
+                text-decoration: none;
+                font-weight: 500;
+                margin-right: 15px;
+                display: inline-block;
+                outline: none;
+            }
+            
+            .lc-update-button:hover,
+            .lc-update-button:focus {
+                background-color: #e67e22;
+                color: #ffffff;
+                outline: none;
+                box-shadow: none !important;
+            }
+            
+            .lc-dismiss-button {
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 0;
+                color: #777777;
+                outline: none;
+            }
+            
+            .lc-dismiss-button:hover {
+                color: #333333;
+            }
+            
+            .lc-dismiss-button .dashicons {
+                font-size: 20px;
+                width: 20px;
+                height: 20px;
+                outline: none;
+            }
+            
+            /* Make responsive for smaller screens */
+            @media screen and (max-width: 782px) {
+                .lc-payment-notice {
+                    flex-wrap: wrap;
+                    padding: 15px;
+                }
+                
+                .lc-payment-notice-message {
+                    margin-bottom: 10px;
+                    width: 100%;
+                }
+                
+                .lc-payment-notice-actions {
+                    width: 100%;
+                    justify-content: space-between;
+                }
+                
+                .lc-update-button {
+                    padding: 8px 10px;
+                    margin-right: 0;
+                }
+            }
+        </style>
+        <?php
     }
 
     /**
@@ -306,7 +511,7 @@ class LeadConnector_Admin
             $event = new PendoEvent("WORDPRESS LC PLUGIN DISCONNECTED", [
                 "locationId" => $options[lead_connector_constants\lc_options_location_id],
             ]);
-            
+
             $event->send();
             // Reset All Options
             $newOptions = array();
@@ -1050,10 +1255,11 @@ class LeadConnector_Admin
     private function lc_encrypt_string($string)
     {
         // Convert objects to JSON string before encryption
+
         if (is_object($string) || is_array($string)) {
             $string = json_encode($string);
         }
-        
+
         $encryption = new LC_Data_Encryption();
         return $encryption->encrypt($string);
     }
@@ -1759,7 +1965,7 @@ class LeadConnector_Admin
         }
         return '';
     }
-
+    
     public function process_page_request()
     {
 
