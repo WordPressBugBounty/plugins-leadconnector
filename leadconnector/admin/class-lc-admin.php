@@ -54,7 +54,7 @@ class LeadConnector_Admin
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/lc-constants.php';
         require_once plugin_dir_path(dirname(__FILE__)) . 'admin/partials/lc-admin-display.php';
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/lc-menu-handler.php';
-        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/Pendo/PendoEvent.php';
+        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/State/StateUpdate.php';
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/Logger/logger.php';
 
         $this->plugin_name = $plugin_name;
@@ -508,10 +508,9 @@ class LeadConnector_Admin
         }
 
         if ($endpoint == 'wp_disconnect') {
-            $event = new PendoEvent("WORDPRESS LC PLUGIN DISCONNECTED", [
+            $event = new StateUpdate("WORDPRESS LC PLUGIN DISCONNECTED", [
                 "locationId" => $options[lead_connector_constants\lc_options_location_id],
             ]);
-
             $event->send();
             // Reset All Options
             $newOptions = array();
@@ -547,8 +546,7 @@ class LeadConnector_Admin
                 }
 
                 $option_saved = update_option(LEAD_CONNECTOR_OPTION_NAME, $previous_options);
-                // Aman - Pendo Event
-                $event = new PendoEvent("WORDPRESS LC PLUGIN CONNECTED", [
+                $event = new StateUpdate("WORDPRESS LC PLUGIN CONNECTED", [
                     "locationId" => $previous_options[lead_connector_constants\lc_options_location_id],
                 ]);
                 $event->send();

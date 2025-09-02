@@ -45,6 +45,11 @@ The LeadConnector plugin helps you install the text to chat widget to your wordp
 
 == Changelog ==
 
+= 3.0.10.2 - 2025-08-05 =
+* Fixed: Login failure in certain scenarios
+* Improved: Minor performance and UI enhancements
+* Resolved: Compatibility issues with PHP 7.3
+
 = 3.0.10.1 - 2025-07-03 =
 * Minor copy changes
 

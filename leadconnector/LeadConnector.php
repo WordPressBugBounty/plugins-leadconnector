@@ -16,7 +16,7 @@
  * Plugin Name:       LeadConnector
  * Plugin URI:        https://www.leadconnectorhq.com/wp_plugin
  * Description:       This plugin helps you to add the lead connector widgets to your website.
- * Version:           3.0.10.1
+ * Version:           3.0.10.2
  * Author:            LeadConnector
  * Author URI:        https://www.leadconnectorhq.com
  * License:           GPL-2.0+
@@ -53,6 +53,16 @@ if (file_exists(__DIR__ . '/config.php')) {
     define('LEAD_CONNECTOR_OAUTH_CLIENT_ID', '6705407d183014f80462d9f1-m20kdypv');
 }
 
+/**
+ * Add custom query variables to WordPress
+ */
+function lead_connector_add_custom_query_vars($vars) {
+    $vars[] = 'code';
+    $vars[] = 'lc_code';
+    // Add any additional custom parameters here
+    return $vars;
+}
+add_filter('query_vars', 'lead_connector_add_custom_query_vars');
 
 /**
  * The code that runs during plugin activation.
@@ -62,6 +72,10 @@ function activate_lead_connector()
 {
     require_once plugin_dir_path(__FILE__) . 'includes/class-lc-activator.php';
     LeadConnector_Activator::activate();
+    
+    // Register custom query vars and flush rewrite rules
+    lead_connector_add_custom_query_vars(array());
+    flush_rewrite_rules();
 }
 
 /**
@@ -72,6 +86,9 @@ function deactivate_lead_connector()
 {
     require_once plugin_dir_path(__FILE__) . 'includes/class-lc-deactivator.php';
     LeadConnector_Deactivator::deactivate();
+    
+    // Flush rewrite rules on deactivation
+    flush_rewrite_rules();
 }
 
 register_activation_hook(__FILE__, 'activate_lead_connector');
@@ -106,12 +123,12 @@ run_lead_connector();
 register_uninstall_hook(__FILE__, 'lead_connector_uninstall_plugin');
 
 function lead_connector_uninstall_plugin() {
-    require_once plugin_dir_path(__FILE__) . 'includes/Pendo/PendoEvent.php';
+    require_once plugin_dir_path(__FILE__) . 'includes/State/StateUpdate.php';
     
     $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
     try {
         if(isset($options[lead_connector_constants\lc_options_location_id])) {
-            $event = new PendoEvent("WORDPRESS LC PLUGIN UNINSTALLED", [
+            $event = new StateUpdate("WORDPRESS LC PLUGIN UNINSTALLED", [
                 "locationId" => $options[lead_connector_constants\lc_options_location_id],
             ]);
             $event->send();
