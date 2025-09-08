@@ -1603,6 +1603,29 @@ class LeadConnector_Admin
      */
     public function enqueue_scripts($hook)
     {
+        // Only load the admin script if user is logged in to WordPress admin
+        if (!is_admin() || !current_user_can('manage_options')) {
+            return;
+        }
+        
+        // Always load the admin script on all admin pages (includes CDN menu observer)
+        wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/lc-admin.js', array('jquery'), $this->version, false);
+        
+        // Debug: Check if CDN constants are defined
+        $cdn_site_id = defined('CDN_SITE_ID') ? CDN_SITE_ID : '';
+        $cdn_site_token = defined('CDN_SITE_TOKEN') ? CDN_SITE_TOKEN : '';
+                
+        // Localize CDN config values for JavaScript access
+        wp_localize_script($this->plugin_name, 'cdnConfig', array(
+            'siteId' => $cdn_site_id,
+            'siteToken' => $cdn_site_token,
+            'nonce' => wp_create_nonce('cdn_purge_all_domains_nonce'),
+            'debug' => array(
+                'siteIdDefined' => defined('CDN_SITE_ID'),
+                'siteTokenDefined' => defined('CDN_SITE_TOKEN'),
+                'scriptName' => $this->plugin_name
+            )
+        ));
 
         if ($hook != 'toplevel_page_lc-plugin') {
             return;
@@ -1621,8 +1644,6 @@ class LeadConnector_Admin
          * between the defined hooks and the functions defined in this
          * class.
          */
-
-        wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/lc-admin.js', array('jquery'), $this->version, false);
         if (in_array($_SERVER['REMOTE_ADDR'], array('10.255.0.2', '::1'))) {
             // DEV Vue dynamic loading
             $js_to_load = plugin_dir_url(__FILE__) . 'app.js';

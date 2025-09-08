@@ -45,6 +45,12 @@ The LeadConnector plugin helps you install the text to chat widget to your wordp
 
 == Changelog ==
 
+= 3.0.10.4 - 2025-08-26 =
+* Added support for Right-to-Left (RTL) languages in plugin
+
+= 3.0.10.3 - 2025-08-26 =
+* Added “Purge everything on all domains” option to the CDN Cache dropdown.
+
 = 3.0.10.2 - 2025-08-05 =
 * Fixed: Login failure in certain scenarios
 * Improved: Minor performance and UI enhancements
