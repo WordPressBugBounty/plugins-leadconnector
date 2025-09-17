@@ -56,6 +56,7 @@ class LeadConnector_Admin
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/lc-menu-handler.php';
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/State/StateUpdate.php';
         require_once plugin_dir_path(dirname(__FILE__)) . 'includes/Logger/logger.php';
+        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/CutomValues/CustomValues.php';
 
         $this->plugin_name = $plugin_name;
         $this->version = $version;
@@ -1090,13 +1091,30 @@ class LeadConnector_Admin
         );
     }
 
-
+    private function lc_save_custom_values($response){
+        if (!$response['error'] && isset($response['body']->data)) {
+            $url = get_rest_url(null, 'lc_internal_api/v1/save_custom_values');
+            $cookies = array();
+            foreach ($_COOKIE as $name => $value) {
+                $cookies[] = new WP_Http_Cookie(array('name' => $name, 'value' => $value));
+            }
+            wp_remote_post($url, array(
+                'method'    => 'POST',
+                'headers'   => array('Content-Type' => 'application/json; charset=utf-8'),
+                'body'      => json_encode(array('custom_values' => $response['body']->data)),
+                'blocking'  => false,
+                'timeout'   => 1,
+                'cookies'   => $cookies
+            ));
+        }
+    }
 
     private function lc_wp_get($endpoint, $params = array())
     {
 
         $params = (object) $params;
         $lcOptions = get_option(LEAD_CONNECTOR_OPTION_NAME);
+        $useV2Request = false;
 
 
         if ($endpoint == 'wp_get_cron_count') {
@@ -1214,6 +1232,27 @@ class LeadConnector_Admin
             if ($endpoint == 'get_chat_widgets') {
                 $finalEndpoint = "wordpress/lc-plugin/chat-widget/list/{$lcLocationId}";
             }
+
+            if ($endpoint == 'get_custom_values') {
+                $finalEndpoint = "wordpress/lc-plugin/custom-values/{$lcLocationId}/values?skip={$params->skip}&limit={$params->limit}&query=" . $params->query;
+                $useV2Request = true;
+            }
+            
+            if($endpoint == 'get_custom_value_folders'){
+                $finalEndpoint = "wordpress/lc-plugin/custom-values/{$lcLocationId}/values?getFolders=true&skip={$params->skip}&limit={$params->limit}";
+                $useV2Request = true;
+            }
+
+            if($endpoint == 'clear_cached_custom_values'){
+                $customValues = new LeadConnector_CustomValues();
+                $customValues->remove_all_cached_custom_values_transients();
+                return array(
+                    'success' => true,
+                    'message' => 'Cached custom values cleared successfully',
+                );
+            }
+        
+
         }
 
 
@@ -1237,8 +1276,18 @@ class LeadConnector_Admin
         //     'api_key' => $api_key
         // );
 
-        if ($authMethod == 'oauth') {
+        if ($authMethod == 'oauth' && !$useV2Request) {
             return $this->lc_oauth_wp_remote_get($finalEndpoint, $lcAccessToken, $baseHost);
+        }
+
+        if($authMethod == 'oauth' && $useV2Request) {
+            $response = $this->lc_oauth_wp_remote_v2('get', $finalEndpoint);
+            $logger = LeadConnector_Logger::get_instance();
+            $logger->info('get_custom_values', $response);
+            if($endpoint == 'get_custom_values'){
+                $this->lc_save_custom_values($response);
+            }
+            return $response;
         }
 
         return $this->lc_wp_remote_get($finalEndpoint, $api_key, $baseHost);
@@ -1472,7 +1521,7 @@ class LeadConnector_Admin
                 'message' => 'Invalid Lead Connector options'
             ];
         }
-
+        
         $accessToken = $accessToken ? $accessToken : $leadConnectorOptions[lead_connector_constants\lc_options_oauth_access_token];
         $accessToken = $this->lc_decrypt_string($accessToken); // Decrypt the access token
         // Prepare request arguments
@@ -1591,7 +1640,7 @@ class LeadConnector_Admin
         $css_to_load = plugin_dir_url(__FILE__) . 'app.css';
         $vendor_css_to_load = plugin_dir_url(__FILE__) . 'app2.css';
 
-        wp_enqueue_style('vue_lead_connector_app', $css_to_load, array(), $this->version, 'all');
+        wp_enqueue_style('vue_lead_connector_app', $css_to_load, array(), $this->version, 'all', false);
         // wp_enqueue_style('vue_lead_connector_vendor', $vendor_css_to_load, array(), $this->version, 'all');
 
     }
@@ -1757,6 +1806,15 @@ class LeadConnector_Admin
             'permission_callback' => function () {
                 return current_user_can('manage_options');
             },
+        ));
+        /**
+         * This endpoint is used to save custom values - Mainly done for async purposes.
+         * If we need to save custom values, we will call this endpoint.
+         */
+        register_rest_route('lc_internal_api/v1', '/save_custom_values', array(
+            'methods' => WP_REST_Server::CREATABLE,
+            'callback' => array($this, 'lc_async_save_custom_values'),
+            'permission_callback' => '__return_true', // Internal endpoint, security is handled by cookie auth
         ));
     }
 
@@ -2103,5 +2161,20 @@ class LeadConnector_Admin
             'could_have_conflict' => $could_have_conflict,
             'plugins' => $plugins_with_conflict,
         );
+    }
+
+    public function lc_async_save_custom_values($request) {
+        $data = $request->get_json_params();
+        // Fallback for non-blocking requests where get_json_params can fail
+        if (empty($data)) {
+            $raw_body = $request->get_body();
+            $data = json_decode($raw_body, true);
+        }
+
+        if (!empty($data) && isset($data['custom_values'])) {
+            $custom_values_manager = new LeadConnector_CustomValues();
+            $custom_values_manager->store_custom_values($data['custom_values']);
+        }
+        return new WP_REST_Response(array('status' => 'success'), 200);
     }
 }

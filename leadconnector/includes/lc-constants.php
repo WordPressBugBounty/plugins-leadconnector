@@ -37,3 +37,5 @@ const lc_rest_api_data_param = "data";
 const lc_custom_post_type = "lc_funnels";
 
 const LC_BASE_URL = "https://app.leadconnectorhq.com/v2"; 
+const lc_field_id_value_key_base = "lc_field_id_value_";
+const lc_get_new_values_cache_key = "lc_get_new_values_cache_key";
