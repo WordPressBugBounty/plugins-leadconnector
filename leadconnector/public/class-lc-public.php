@@ -54,57 +54,6 @@ class LeadConnector_Public
         $this->plugin_name = $plugin_name;
         $this->version = $version;
 
-        // Add filters for custom value placeholders across various content types
-        
-        // Post/Page Content
-        add_filter('the_content', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('the_excerpt', array($this, 'replace_custom_value_placeholders'), 20);
-        
-        // Titles
-        add_filter('the_title', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('wp_title', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('document_title_parts', array($this, 'replace_custom_value_in_title_parts'), 20);
-        add_filter('pre_get_document_title', array($this, 'replace_custom_value_placeholders'), 20);
-        
-        // Widget Content
-        add_filter('widget_text', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('widget_text_content', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('widget_title', array($this, 'replace_custom_value_placeholders'), 20);
-        
-        // Meta Description and SEO
-        add_filter('get_the_excerpt', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('meta_description', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('wpseo_title', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('wpseo_metadesc', array($this, 'replace_custom_value_placeholders'), 20);
-        
-        // Navigation
-        add_filter('nav_menu_item_title', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('wp_nav_menu_items', array($this, 'replace_custom_value_placeholders'), 20);
-        
-        // Block-based Navigation
-        add_filter('render_block_core/navigation', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('render_block_core/navigation-link', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('render_block_core/page-list', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('render_block', array($this, 'replace_custom_value_in_blocks'), 20, 2);
-        
-        // Comments
-        add_filter('comment_text', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('comment_excerpt', array($this, 'replace_custom_value_placeholders'), 20);
-        
-        // Custom Fields
-        add_filter('the_meta', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('get_post_metadata', array($this, 'replace_custom_value_placeholders'), 20);
-        
-        // ACF Fields (if Advanced Custom Fields is used)
-        add_filter('acf/load_value', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('acf/format_value', array($this, 'replace_custom_value_placeholders'), 20);
-        
-        // WooCommerce (if WooCommerce is active)
-        add_filter('woocommerce_product_title', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('woocommerce_short_description', array($this, 'replace_custom_value_placeholders'), 20);
-        add_filter('woocommerce_product_description', array($this, 'replace_custom_value_placeholders'), 20);
-        
-        
     }
 
     /**
@@ -136,71 +85,6 @@ class LeadConnector_Public
      *
      * @since    1.0.0
      */
-    /**
-     * Replace custom value placeholders in content
-     * 
-     * @param string $content The content to process
-     * @return string The processed content
-     */
-    public function replace_custom_value_placeholders($content) {
-        if (empty($content)) {
-            return $content;
-        }
-
-        // Initialize CustomValues class
-        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/CutomValues/CustomValues.php';
-        $custom_values = new LeadConnector_CustomValues();
-        // Pattern to match {{ custom_value.key }} with optional spaces
-        return preg_replace_callback('/\{\{\s*custom_values\.(\w+)\s*\}\}/', function($matches) use ($custom_values) {
-            $field_key = trim($matches[1]); // Trim any extra whitespace
-            $value = $custom_values->getValue($field_key);
-            return $value !== null ? $value : ""; // Return blank if no value found
-        }, $content);
-    }
-
-    /**
-     * Replace custom value placeholders in document title parts
-     * 
-     * @param array $title_parts The title parts array
-     * @return array The processed title parts
-     */
-    public function replace_custom_value_in_title_parts($title_parts) {
-        if (!is_array($title_parts)) {
-            return $title_parts;
-        }
-
-        foreach ($title_parts as $key => $part) {
-            if (is_string($part)) {
-                $title_parts[$key] = $this->replace_custom_value_placeholders($part);
-            }
-        }
-
-        return $title_parts;
-    }
-
-    /**
-     * Replace custom value placeholders in block content
-     *
-     * @param string $block_content The block content about to be rendered
-     * @param array  $block         The full block, including name and attributes
-     * @return string
-     */
-    public function replace_custom_value_in_blocks($block_content, $block) {
-        // Only process navigation-related blocks or blocks that might contain navigation
-        $navigation_blocks = ['core/navigation', 'core/navigation-link', 'core/page-list'];
-        
-        if (empty($block['blockName'])) {
-            return $block_content;
-        }
-
-        // Process if it's a navigation block or if content contains custom_values placeholder
-        if (in_array($block['blockName'], $navigation_blocks) || strpos($block_content, 'custom_values.') !== false) {
-            return $this->replace_custom_value_placeholders($block_content);
-        }
-        
-        return $block_content;
-    }
-
     public function enqueue_scripts()
     {
 
