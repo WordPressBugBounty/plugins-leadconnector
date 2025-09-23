@@ -4,7 +4,7 @@ Tags: crm, lead connector
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 5.6
-Stable tag: 3.0.10.1
+Stable tag: 3.0.10.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,12 @@ The LeadConnector plugin helps you install the text to chat widget to your wordp
 5. View and Manage All Your Pages
 
 == Changelog ==
+
+== 3.0.10.5 - 2025-09-22 ==
+* Resolved : Plugin breaking issue with Advanced Custom Fields
+
+== 3.0.11 - 2025-09-11 ==
+* Implements Added a new feature that allows integration of custom values into WordPress.
 
 = 3.0.10.4 - 2025-08-26 =
 * Added support for Right-to-Left (RTL) languages in plugin
