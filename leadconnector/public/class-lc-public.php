@@ -136,6 +136,9 @@ class LeadConnector_Public
         add_filter('comment_text', array($this, 'replace_custom_value_placeholders'), 20);
         add_filter('comment_excerpt', array($this, 'replace_custom_value_placeholders'), 20);
 
+        // Elementor highlight functionality
+        add_action('wp_head', array($this, 'inject_elementor_highlight_styles'), 999);
+
     }
 
     /**
@@ -365,7 +368,308 @@ class LeadConnector_Public
                 }
             }
         }
+    }
 
+    /**
+     * Inject Elementor highlight styles when elementor_highlight=true parameter is present
+     * 
+     * @since    1.0.0
+     */
+    public function inject_elementor_highlight_styles()
+    {
+        // Check if elementor_highlight parameter is present and set to 'true'
+        $elementor_highlight = isset($_GET['elementor_highlight']) && $_GET['elementor_highlight'] === 'true';
+        
+        if (!$elementor_highlight) {
+            return;
+        }
+
+        // Magic wand SVG icon (encoded for use in CSS)
+        // Classic magic wand with star at the end
+        $magic_wand_svg = urlencode('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23ef4444\'%3E%3Cpath d=\'M17 5h2v14h-2V5zm-4 1h2v12h-2V6zm-4 1h2v10h-2V7zm-4 1h2v8H5V8zM12 2l2 2-2 2-2-2 2-2zm0 16l2 2-2 2-2-2 2-2z\'/%3E%3C/svg%3E');
+
+        ?>
+        <style id="leadconnector-elementor-highlight">
+            /* Custom Hero Classes - Red highlight */
+            .hero-heading-class:hover,
+            .hero-description-class:hover,
+            .about-us-story-content-class:hover,
+            .about-us-story-header-class:hover {
+                outline: 2px dashed #84ADFF !important;
+                outline-offset: 4px !important;
+                position: relative !important;
+                cursor: pointer !important;
+            }
+
+            /* Elementor Heading Widget - Magic wand icon on hover */
+            /* .elementor-widget-heading:hover::before,
+            .elementor-element.elementor-widget-heading:hover::before {
+                content: '';
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                width: 20px;
+                height: 20px;
+                background-image: url('<?php echo $magic_wand_svg; ?>');
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                z-index: 9999;
+                pointer-events: none;
+            } */
+
+            /* Elementor Elements - Blue highlight - COMMENTED OUT: will visit later */
+            /* .elementor-element:hover:not(.elementor-widget-heading):not(.elementor-element.elementor-widget-heading):not(.elementor-widget-text-editor):not(.elementor-element.elementor-widget-text-editor),
+            .elementor-section:hover {
+                outline: 2px dashed #3b82f6 !important;
+                outline-offset: 4px !important;
+                position: relative !important;
+                cursor: pointer !important;
+            } */
+        </style>
+        <script id="leadconnector-elementor-hover-events">
+            (function() {
+                'use strict';
+                
+                // Throttle function to limit event frequency
+                function throttle(func, limit) {
+                    let inThrottle;
+                    return function() {
+                        const args = arguments;
+                        const context = this;
+                        if (!inThrottle) {
+                            func.apply(context, args);
+                            inThrottle = true;
+                            setTimeout(() => inThrottle = false, limit);
+                        }
+                    };
+                }
+                
+                // Get full text content from element, including nested elements
+                function getFullText(element) {
+                    // For heading widgets, get direct text content
+                    return (element.textContent || element.innerText || '').trim();
+                }
+                
+                // Send message to parent window
+                function sendToParent(eventType, element, elementType) {
+                    try {
+                        if (window.parent && window.parent !== window) {
+                            const rect = element.getBoundingClientRect();
+                            const elementData = {
+                                type: eventType, // 'elementor-click'
+                                elementType: elementType, // 'heading', 'description', 'about-us-story-header', 'about-us-story-content'
+                                selector: element.className ? element.className.split(' ').find(cls => cls.includes('hero-heading-class') || cls.includes('hero-description-class') || cls.includes('about-us-story-header-class') || cls.includes('about-us-story-content-class')) || '' : '',
+                                classes: element.className || '',
+                                position: {
+                                    x: Math.round(rect.left),
+                                    y: Math.round(rect.top),
+                                    width: Math.round(rect.width),
+                                    height: Math.round(rect.height)
+                                },
+                                text: (elementType === 'heading' || elementType === 'description' || elementType === 'about-us-story-header' || elementType === 'about-us-story-content') ? getFullText(element) : null
+                            };
+                            
+                            window.parent.postMessage({
+                                source: 'leadconnector-elementor-iframe',
+                                ...elementData
+                            }, '*'); // Using '*' for cross-origin - parent should validate origin
+                        }
+                    } catch (e) {
+                        // Silently fail if postMessage fails (e.g., cross-origin restrictions)
+                        console.warn('LeadConnector: Could not send message to parent', e);
+                    }
+                }
+                
+                // Send click function (no throttling needed for clicks)
+                const sendClick = function(element, elementType) {
+                    sendToParent('elementor-click', element, elementType);
+                };
+                
+                // Track elements that already have listeners to prevent duplicates
+                const elementsWithListeners = new WeakSet();
+                
+                // Helper function to determine element type from class
+                function getElementType(element) {
+                    if (element.classList.contains('hero-heading-class')) return 'heading';
+                    if (element.classList.contains('hero-description-class')) return 'description';
+                    if (element.classList.contains('about-us-story-header-class')) return 'about-us-story-header';
+                    if (element.classList.contains('about-us-story-content-class')) return 'about-us-story-content';
+                    return null;
+                }
+                
+                // Initialize event listeners when DOM is ready
+                function initEventListeners() {
+                    // All custom classes - click events
+                    const customElements = document.querySelectorAll('.hero-heading-class, .hero-description-class, .about-us-story-content-class, .about-us-story-header-class');
+                    
+                    customElements.forEach(function(element) {
+                        // Skip if this element already has a listener
+                        if (elementsWithListeners.has(element)) {
+                            return;
+                        }
+                        
+                        // Create the click handler
+                        const clickHandler = function(e) {
+                            // Check if the click is on this element or any child element
+                            const clickedElement = e.target;
+                            const targetElement = element;
+                            
+                            // Verify the clicked element is within our target element (handles child clicks)
+                            if (!targetElement.contains(clickedElement) && clickedElement !== targetElement) {
+                                return; // Click was outside our element, ignore
+                            }
+                            
+                            // Determine element type based on class
+                            const elementType = getElementType(element);
+                            if (elementType) {
+                                sendClick(element, elementType);
+                            }
+                            // Don't stop propagation to allow normal elementor behavior
+                        };
+                        
+                        // Attach the listener with capture: true to catch events early
+                        element.addEventListener('click', clickHandler, { passive: true, capture: true });
+                        
+                        // Store the handler reference on the element for potential cleanup
+                        element._leadConnectorClickHandler = clickHandler;
+                        
+                        // Mark this element as having a listener
+                        elementsWithListeners.add(element);
+                    });
+                    
+                    // Other Elementor elements (not headings or text-editor) - COMMENTED OUT: will visit later
+                    /* const otherElements = document.querySelectorAll('.elementor-element:not(.elementor-widget-heading):not(.elementor-element.elementor-widget-heading):not(.elementor-widget-text-editor):not(.elementor-element.elementor-widget-text-editor):not(.elementor-section)');
+                    otherElements.forEach(function(element) {
+                        element.addEventListener('mouseenter', function(e) {
+                            sendHover(element, 'element');
+                        }, { passive: true });
+                        
+                        element.addEventListener('mouseleave', function(e) {
+                            sendUnhover(element, 'element');
+                        }, { passive: true });
+                    }); */
+                    
+                    // Elementor sections - COMMENTED OUT: will visit later
+                    /* const sections = document.querySelectorAll('.elementor-section');
+                    sections.forEach(function(element) {
+                        element.addEventListener('mouseenter', function(e) {
+                            sendHover(element, 'section');
+                        }, { passive: true });
+                        
+                        element.addEventListener('mouseleave', function(e) {
+                            sendUnhover(element, 'section');
+                        }, { passive: true });
+                    }); */
+                }
+                
+                // Wait for DOM to be ready
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initEventListeners);
+                } else {
+                    // DOM already ready, but wait a bit for Elementor elements to be rendered
+                    setTimeout(initEventListeners, 500);
+                }
+                
+                // Also try after a longer delay in case elements load dynamically
+                setTimeout(initEventListeners, 1500);
+                
+                // Listen for messages from parent window (Vue.js app)
+                function handleParentMessage(event) {
+                    // Optional: Validate origin for security
+                    // if (event.origin !== 'expected-origin') return;
+                    
+                    // Check if message is from our parent app
+                    if (event.data && event.data.source === 'leadconnector-parent-app') {
+                        const messageType = event.data.type;
+                        const messageData = event.data.data;
+                        
+                        // Handle updateContent message
+                        if (messageType === 'updateContent') {
+                            updateHeroContent(messageData);
+                        }
+                    }
+                }
+                
+                // Helper function to get target class from element type
+                function getTargetClass(elementType) {
+                    const classMap = {
+                        'heading': 'hero-heading-class',
+                        'description': 'hero-description-class',
+                        'about-us-story-header': 'about-us-story-header-class',
+                        'about-us-story-content': 'about-us-story-content-class'
+                    };
+                    return classMap[elementType] || null;
+                }
+                
+                // Function to update element content
+                function updateHeroContent(data) {
+                    if (!data || !data.elementType || !data.content) {
+                        console.warn('LeadConnector: Invalid updateContent data', data);
+                        return;
+                    }
+                    
+                    // Determine which class to target based on elementType
+                    const targetClass = getTargetClass(data.elementType);
+                    
+                    if (!targetClass) {
+                        console.warn('LeadConnector: Unknown elementType', data.elementType);
+                        return;
+                    }
+                    
+                    // Find all elements with the target class
+                    const elements = document.querySelectorAll('.' + targetClass);
+                    
+                    if (elements.length === 0) {
+                        console.warn('LeadConnector: No elements found with class', targetClass);
+                        return;
+                    }
+                    
+                    // Update content for each element
+                    elements.forEach(function(element) {
+                        // Try to find the text content container
+                        // For Elementor heading widgets, look for the heading tag (h1, h2, h3, etc.)
+                        let contentElement = element.querySelector('h1, h2, h3, h4, h5, h6, .elementor-heading-title');
+                        
+                        // For text-editor/widgets, look for the editor container
+                        if (!contentElement) {
+                            contentElement = element.querySelector('.elementor-widget-container, .elementor-text-editor');
+                        }
+                        
+                        // Fallback to the element itself
+                        if (!contentElement) {
+                            contentElement = element;
+                        }
+                        
+                        // Update only the text content (preserves styles and HTML structure)
+                        if (data.content) {
+                            // Use textContent to update only text, not HTML
+                            // This preserves existing styles, classes, and structure
+                            contentElement.textContent = data.content;
+                        }
+                    });
+                    
+                    // Send confirmation back to parent
+                    try {
+                        if (window.parent && window.parent !== window) {
+                            window.parent.postMessage({
+                                source: 'leadconnector-elementor-iframe',
+                                type: 'content-updated',
+                                elementType: data.elementType,
+                                success: true
+                            }, '*');
+                        }
+                    } catch (e) {
+                        console.warn('LeadConnector: Could not send confirmation to parent', e);
+                    }
+                }
+                
+                // Add message listener
+                window.addEventListener('message', handleParentMessage);
+                
+            })();
+        </script>
+        <?php
     }
 
 }

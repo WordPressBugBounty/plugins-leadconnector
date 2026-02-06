@@ -60,11 +60,11 @@ class LeadConnector_Admin
 
         $this->plugin_name = $plugin_name;
         $this->version = $version;
-        
+
         // Replace admin bar notification with admin notice banner
         add_action('admin_notices', array($this, 'display_payment_failed_banner'));
         add_action('admin_head', array($this, 'add_payment_notification_styles'));
-        
+
         // Ensure dashicons are loaded in frontend for non-admin users
         add_action('wp_enqueue_scripts', array($this, 'enqueue_dashicons'));
     }
@@ -80,24 +80,25 @@ class LeadConnector_Admin
         if (!defined('LC_PAYMENT_FAILED') || LC_PAYMENT_FAILED !== true) {
             return;
         }
-        
+
         // Get domain and location ID from constants, or use defaults
         $company_domain = defined('LC_COMPANY_DOMAIN') ? LC_COMPANY_DOMAIN : 'app.leadconnectorhq.com';
         $location_id = defined('LC_LOCATION_ID') ? LC_LOCATION_ID : '';
-        
+
         // Build the payment URL
         $payment_url = $company_domain . '/v2/location/' . $location_id . '/wordpress/dashboard';
-        
+
         // Add https:// if not included in the domain
         if (strpos($payment_url, 'http') !== 0) {
             $payment_url = 'https://' . $payment_url;
         }
-        
+
         ?>
         <div class="lc-payment-notice-wrapper">
             <div class="lc-payment-notice">
                 <div class="lc-payment-notice-icon">
-                    <img src="https://storage.googleapis.com/preview-production-assets/wordpress/lc-warning-icon.svg" alt="Warning" />
+                    <img src="https://storage.googleapis.com/preview-production-assets/wordpress/lc-warning-icon.svg"
+                        alt="Warning" />
                 </div>
                 <div class="lc-payment-notice-message">
                     Your recent payment has failed. Please update your billing information.
@@ -114,10 +115,10 @@ class LeadConnector_Admin
         </div>
 
         <script type="text/javascript">
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 const dismissButton = document.querySelector('.lc-dismiss-button');
                 if (dismissButton) {
-                    dismissButton.addEventListener('click', function() {
+                    dismissButton.addEventListener('click', function () {
                         const banner = document.querySelector('.lc-payment-notice-wrapper');
                         if (banner) {
                             banner.style.display = 'none';
@@ -132,7 +133,8 @@ class LeadConnector_Admin
     /**
      * Ensure dashicons are loaded for non-admin users
      */
-    public function enqueue_dashicons() {
+    public function enqueue_dashicons()
+    {
         wp_enqueue_style('dashicons');
     }
 
@@ -154,7 +156,7 @@ class LeadConnector_Admin
                 border: none;
                 outline: none;
             }
-            
+
             .lc-payment-notice {
                 display: flex;
                 align-items: center;
@@ -166,7 +168,7 @@ class LeadConnector_Admin
                 border: none;
                 outline: none;
             }
-            
+
             .lc-payment-notice-icon {
                 margin-right: 15px;
                 border: none;
@@ -174,14 +176,14 @@ class LeadConnector_Admin
                 display: flex;
                 align-items: center;
             }
-            
+
             .lc-payment-notice-icon img {
                 width: 24px;
                 height: 24px;
                 outline: none;
                 border: none;
             }
-            
+
             .lc-payment-notice-message {
                 flex: 1;
                 font-size: 14px;
@@ -190,14 +192,14 @@ class LeadConnector_Admin
                 border: none;
                 outline: none;
             }
-            
+
             .lc-payment-notice-actions {
                 display: flex;
                 align-items: center;
                 border: none;
                 outline: none;
             }
-            
+
             .lc-update-button {
                 background-color: #d35400;
                 color: #ffffff;
@@ -212,7 +214,7 @@ class LeadConnector_Admin
                 display: inline-block;
                 outline: none;
             }
-            
+
             .lc-update-button:hover,
             .lc-update-button:focus {
                 background-color: #e67e22;
@@ -220,7 +222,7 @@ class LeadConnector_Admin
                 outline: none;
                 box-shadow: none !important;
             }
-            
+
             .lc-dismiss-button {
                 background: none;
                 border: none;
@@ -229,35 +231,35 @@ class LeadConnector_Admin
                 color: #777777;
                 outline: none;
             }
-            
+
             .lc-dismiss-button:hover {
                 color: #333333;
             }
-            
+
             .lc-dismiss-button .dashicons {
                 font-size: 20px;
                 width: 20px;
                 height: 20px;
                 outline: none;
             }
-            
+
             /* Make responsive for smaller screens */
             @media screen and (max-width: 782px) {
                 .lc-payment-notice {
                     flex-wrap: wrap;
                     padding: 15px;
                 }
-                
+
                 .lc-payment-notice-message {
                     margin-bottom: 10px;
                     width: 100%;
                 }
-                
+
                 .lc-payment-notice-actions {
                     width: 100%;
                     justify-content: space-between;
                 }
-                
+
                 .lc-update-button {
                     padding: 8px 10px;
                     margin-right: 0;
@@ -389,6 +391,7 @@ class LeadConnector_Admin
         $lc_display_method = get_post_meta($post->ID, "lc_display_method", true);
         $lc_include_tracking_code = get_post_meta($post->ID, "lc_include_tracking_code", true);
         $lc_use_site_favicon = get_post_meta($post->ID, "lc_use_site_favicon", true);
+        $lc_include_wp_headers_and_footers = get_post_meta($post->ID, "lc_include_wp_headers_and_footers", true);
 
         $base_url = get_home_url() . "/";
 
@@ -412,7 +415,7 @@ class LeadConnector_Admin
             "lc_display_method" => $lc_display_method,
             "lc_include_tracking_code" => $lc_include_tracking_code,
             "lc_use_site_favicon" => $lc_use_site_favicon,
-
+            "lc_include_wp_headers_and_footers" => $lc_include_wp_headers_and_footers,
         ];
 
         return $data;
@@ -425,6 +428,10 @@ class LeadConnector_Admin
         $newOptions[lead_connector_constants\lc_options_location_id] = "lc_disconnect";
 
         $option_saved = update_option(LEAD_CONNECTOR_OPTION_NAME, $newOptions);
+        
+        // Clear all caches to ensure widget is removed from cached pages
+        $this->clear_all_caches();
+        
         return array(
             "-success" => true,
             "options_saved" => $option_saved,
@@ -474,7 +481,8 @@ class LeadConnector_Admin
             $has_connected_auth = false;
             $connection_method = '';
 
-            $funnelFetchResponse = array('error' => true);;
+            $funnelFetchResponse = array('error' => true);
+            ;
 
             if ($lc_access_token != '' || $api_key != '') {
                 $has_connected_auth = true;
@@ -487,7 +495,7 @@ class LeadConnector_Admin
                     $connection_method = 'api_key';
                 }
 
-                $funnelFetchResponse =  $this->lc_wp_get('funnels_get_list');
+                $funnelFetchResponse = $this->lc_wp_get('funnels_get_list');
             }
             $funnelFetchResponse = (array) $funnelFetchResponse;
 
@@ -521,6 +529,9 @@ class LeadConnector_Admin
             // $newOptions[lead_connector_constants\lc_options_location_id] = "";
 
             $option_saved = update_option(LEAD_CONNECTOR_OPTION_NAME, $newOptions);
+            
+            // Clear all caches to ensure widget is removed from cached pages
+            $this->clear_all_caches();
 
             return array(
                 "success" => true,
@@ -616,6 +627,10 @@ class LeadConnector_Admin
                 }
 
                 $option_saved = update_option(LEAD_CONNECTOR_OPTION_NAME, $newOptions);
+                
+                // Clear all caches when widget settings are updated
+                $this->clear_all_caches();
+                
                 if ($text_widget_error == "1") {
                     return (array(
                         'error' => true,
@@ -656,6 +671,7 @@ class LeadConnector_Admin
                 $lc_funnel_tracking_code = null;
                 $lc_include_tracking_code = false;
                 $lc_use_site_favicon = false;
+                $lc_include_wp_headers_and_footers = false;
 
                 if ($body->lc_include_tracking_code == "1") {
                     $lc_include_tracking_code = true;
@@ -663,15 +679,18 @@ class LeadConnector_Admin
                 if ($body->lc_use_site_favicon == "1") {
                     $lc_use_site_favicon = true;
                 }
+                if ($body->lc_include_wp_headers_and_footers == "1") {
+                    $lc_include_wp_headers_and_footers = true;
+                }
                 // Old Method provided meta in the body itself - Now we have to fetch it from the backend
                 $includeMetaTags = true;
-                if($includeMetaTags) {
+                if ($includeMetaTags) {
                     $lc_step_meta_response = $this->lc_oauth_wp_remote_v2(
-                        'get', 
+                        'get',
                         sprintf('funnels/page/data?pageId=%s', $lc_step_page_id),
-                        [], 
-                        null, 
-                        LEAD_CONNECTOR_MARKETPLACE_BACKEND_URL, 
+                        [],
+                        null,
+                        LEAD_CONNECTOR_MARKETPLACE_BACKEND_URL,
                         true
                     );
 
@@ -793,6 +812,9 @@ class LeadConnector_Admin
                 if (isset($lc_funnel_tracking_code)) {
                     update_post_meta($post_id, "lc_funnel_tracking_code", $lc_funnel_tracking_code);
                 }
+                if (isset($lc_include_wp_headers_and_footers)) {
+                    update_post_meta($post_id, "lc_include_wp_headers_and_footers", $lc_include_wp_headers_and_footers);
+                }
 
                 return (array(
                     'success' => true,
@@ -824,8 +846,8 @@ class LeadConnector_Admin
                 $location_id = esc_attr($options[lead_connector_constants\lc_options_location_id]);
             }
 
-            if ($the_posts->have_posts()) :
-                while ($the_posts->have_posts()) :
+            if ($the_posts->have_posts()):
+                while ($the_posts->have_posts()):
                     $the_posts->the_post();
                     $templates[] = $this->get_item(get_the_ID(), $location_id);
                 endwhile;
@@ -1049,7 +1071,7 @@ class LeadConnector_Admin
                 update_option(LEAD_CONNECTOR_OPTION_NAME, $lcOptions);
             }
         }
-    
+
 
         return array(
             "success" => true,
@@ -1091,7 +1113,8 @@ class LeadConnector_Admin
         );
     }
 
-    private function lc_save_custom_values($response){
+    private function lc_save_custom_values($response)
+    {
         if (!$response['error'] && isset($response['body']->data)) {
             $url = get_rest_url(null, 'lc_internal_api/v1/save_custom_values');
             $cookies = array();
@@ -1099,12 +1122,12 @@ class LeadConnector_Admin
                 $cookies[] = new WP_Http_Cookie(array('name' => $name, 'value' => $value));
             }
             wp_remote_post($url, array(
-                'method'    => 'POST',
-                'headers'   => array('Content-Type' => 'application/json; charset=utf-8'),
-                'body'      => json_encode(array('custom_values' => $response['body']->data)),
-                'blocking'  => false,
-                'timeout'   => 1,
-                'cookies'   => $cookies
+                'method' => 'POST',
+                'headers' => array('Content-Type' => 'application/json; charset=utf-8'),
+                'body' => json_encode(array('custom_values' => $response['body']->data)),
+                'blocking' => false,
+                'timeout' => 1,
+                'cookies' => $cookies
             ));
         }
     }
@@ -1118,7 +1141,7 @@ class LeadConnector_Admin
 
 
         if ($endpoint == 'wp_get_cron_count') {
-            $has_cron =  wp_next_scheduled('lc_twicedaily_refresh_req');
+            $has_cron = wp_next_scheduled('lc_twicedaily_refresh_req');
 
             $maintenance_mode = false;
             $is_allowed = false;
@@ -1237,13 +1260,21 @@ class LeadConnector_Admin
                 $finalEndpoint = "wordpress/lc-plugin/custom-values/{$lcLocationId}/values?skip={$params->skip}&limit={$params->limit}&query=" . $params->query;
                 $useV2Request = true;
             }
-            
-            if($endpoint == 'get_custom_value_folders'){
+
+            if ($endpoint == 'get_custom_value_folders') {
                 $finalEndpoint = "wordpress/lc-plugin/custom-values/{$lcLocationId}/values?getFolders=true&skip={$params->skip}&limit={$params->limit}";
                 $useV2Request = true;
             }
+            if ($endpoint == 'get_surveys') {
+                $finalEndpoint = "wordpress/lc-plugin/surveys/{$lcLocationId}?skip={$params->skip}&limit={$params->limit}&query=" . $params->query;
+                $useV2Request = true;
+            }
+            if ($endpoint == 'get_quizzes') {
+                $finalEndpoint = "wordpress/lc-plugin/quizzes/{$lcLocationId}?skip={$params->skip}&limit={$params->limit}&query=" . $params->query;
+                $useV2Request = true;
+            }
 
-            if($endpoint == 'clear_cached_custom_values'){
+            if ($endpoint == 'clear_cached_custom_values') {
                 $customValues = new LeadConnector_CustomValues();
                 $customValues->remove_all_cached_custom_values_transients();
                 return array(
@@ -1251,8 +1282,22 @@ class LeadConnector_Admin
                     'message' => 'Cached custom values cleared successfully',
                 );
             }
-        
 
+            if ($endpoint == 'get_reviews_widgets') {
+                $finalEndpoint = "wordpress/lc-plugin/reviews-widget/{$lcLocationId}?pageNumber={$params->pageNumber}&pageSize={$params->pageSize}";
+                $useV2Request = true;
+            }
+
+
+            if ($endpoint == 'get_calendars') {
+                $finalEndpoint = "wordpress/lc-plugin/calendars/{$lcLocationId}";
+                $useV2Request = true;
+            }
+
+            if ($endpoint == 'get_calendar_groups') {
+                $finalEndpoint = "wordpress/lc-plugin/calendars/{$lcLocationId}/groups";
+                $useV2Request = true;
+            }
         }
 
 
@@ -1280,11 +1325,11 @@ class LeadConnector_Admin
             return $this->lc_oauth_wp_remote_get($finalEndpoint, $lcAccessToken, $baseHost);
         }
 
-        if($authMethod == 'oauth' && $useV2Request) {
+        if ($authMethod == 'oauth' && $useV2Request) {
             $response = $this->lc_oauth_wp_remote_v2('get', $finalEndpoint);
             $logger = LeadConnector_Logger::get_instance();
             $logger->info('get_custom_values', $response);
-            if($endpoint == 'get_custom_values'){
+            if ($endpoint == 'get_custom_values') {
                 $this->lc_save_custom_values($response);
             }
             return $response;
@@ -1521,7 +1566,7 @@ class LeadConnector_Admin
                 'message' => 'Invalid Lead Connector options'
             ];
         }
-        
+
         $accessToken = $accessToken ? $accessToken : $leadConnectorOptions[lead_connector_constants\lc_options_oauth_access_token];
         $accessToken = $this->lc_decrypt_string($accessToken); // Decrypt the access token
         // Prepare request arguments
@@ -1646,24 +1691,20 @@ class LeadConnector_Admin
     }
 
     /**
-     * Register the JavaScript for the admin area.
+     * Enqueue CDN purge script (used on both admin and frontend)
+     * This ensures "Purge everything on all domains" appears wherever CDN menu is visible
      *
      * @since    1.0.0
      */
-    public function enqueue_scripts($hook)
+    private function enqueue_cdn_purge_script()
     {
-        // Only load the admin script if user is logged in to WordPress admin
-        if (!is_admin() || !current_user_can('manage_options')) {
-            return;
-        }
-        
         // Always load the admin script on all admin pages (includes CDN menu observer)
         wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/lc-admin.js', array('jquery'), $this->version, false);
-        
+
         // Debug: Check if CDN constants are defined
         $cdn_site_id = defined('CDN_SITE_ID') ? CDN_SITE_ID : '';
         $cdn_site_token = defined('CDN_SITE_TOKEN') ? CDN_SITE_TOKEN : '';
-                
+
         // Localize CDN config values for JavaScript access
         wp_localize_script($this->plugin_name, 'cdnConfig', array(
             'siteId' => $cdn_site_id,
@@ -1675,6 +1716,22 @@ class LeadConnector_Admin
                 'scriptName' => $this->plugin_name
             )
         ));
+    }
+
+    /**
+     * Register the JavaScript for the admin area.
+     *
+     * @since    1.0.0
+     */
+    public function enqueue_scripts($hook)
+    {
+        // Only load the admin script if user is logged in to WordPress admin
+        if (!is_admin() || !current_user_can('manage_options')) {
+            return;
+        }
+
+        // Enqueue CDN purge script for admin pages (where CDN menu appears)
+        $this->enqueue_cdn_purge_script();
 
         if ($hook != 'toplevel_page_lc-plugin') {
             return;
@@ -1717,7 +1774,7 @@ class LeadConnector_Admin
             'lc_admin_settings',
             array(
                 'enable_text-widget' => $enabledTextWidget,
-                'proxy_url' => rest_url('lc_public_api/v1/proxy'),
+                'proxy_url' => get_rest_url(null, 'lc_public_api/v1/proxy'),
                 'nonce' => wp_create_nonce('wp_rest'),
             )
         );
@@ -1734,7 +1791,10 @@ class LeadConnector_Admin
                 'LEAD_CONNECTOR_BASE_URL' => LEAD_CONNECTOR_BASE_URL,
                 'LEAD_CONNECTOR_DISPLAY_NAME' => LEAD_CONNECTOR_DISPLAY_NAME,
                 'LC_ROOT_DOMAIN' => LC_ROOT_DOMAIN,
-                'LC_BASE_URL' => LC_BASE_URL
+                'LC_BASE_URL' => LC_BASE_URL,
+                'LC_REPUTATION_WIDGET_SCRIPT_URL' => LC_REPUTATION_WIDGET_SCRIPT_URL,
+                'LC_REPUTATION_WIDGET_BASE_URL' => LC_REPUTATION_WIDGET_BASE_URL,
+                'LEAD_CONNECTOR_OAUTH_CALLBACK_URL' => LEAD_CONNECTOR_OAUTH_CALLBACK_URL,
             )
         );
 
@@ -1756,8 +1816,27 @@ class LeadConnector_Admin
         add_filter('script_loader_tag', 'lc_add_type_attribute', 10, 3);
     }
 
+    /**
+     * Enqueue CDN purge script on frontend when admin bar is visible
+     *
+     * @since    1.0.0
+     */
+    public function enqueue_cdn_script_frontend()
+    {
+        // Only load on frontend when user is logged in and has admin bar visible
+        if (is_admin() || !is_user_logged_in() || !current_user_can('manage_options')) {
+            return;
+        }
 
+        // Check if admin bar is showing (WordPress shows admin bar on frontend for logged-in admins)
+        // The CDN menu only appears when admin bar is visible
+        if (!is_admin_bar_showing()) {
+            return;
+        }
 
+        // Enqueue CDN purge script for frontend pages with admin bar (where CDN menu appears)
+        $this->enqueue_cdn_purge_script();
+    }
 
     /**
      * Top level menu callback function
@@ -2016,13 +2095,14 @@ class LeadConnector_Admin
         $funnel_host = parse_url($funnel_step_url, PHP_URL_HOST);
         $is_whitelabeled = false;
 
-        if (strpos($funnel_host, 'leadconnectorhq.com') !== false) {
+        if ($funnel_host !== 'app.leadconnectorhq.com') {
             $is_whitelabeled = true;
         }
 
         // Change the host to app.leadconnectorhq.com if it's whitelabeled
         if ($is_whitelabeled) {
             $funnel_step_url = str_replace($funnel_host, 'app.leadconnectorhq.com', $funnel_step_url);
+            $funnel_host = 'app.leadconnectorhq.com';
         }
 
         // Old Code Do not remove
@@ -2033,16 +2113,52 @@ class LeadConnector_Admin
             );
         }
 
-        $response = wp_remote_get($funnel_step_url);
+        // Make request with increased timeout
+        $response = wp_remote_get($funnel_step_url, array(
+            'timeout' => 30,
+            'sslverify' => true,
+        ));
         $iframe_content = '';
 
-        if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
-            $iframe_content = wp_remote_retrieve_body($response);
-            return $iframe_content;
+        if (is_wp_error($response)) {
+            // Log the error for debugging
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('LeadConnector Native Page Error: ' . $response->get_error_message());
+                error_log('LeadConnector URL attempted: ' . $funnel_step_url);
+            }
+            return sprintf(
+                '<!-- Error fetching content: %s from URL: %s -->',
+                esc_html($response->get_error_message()),
+                esc_html($funnel_step_url)
+            );
         }
-        return '';
+
+        $response_code = wp_remote_retrieve_response_code($response);
+        if ($response_code !== 200) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('LeadConnector Native Page Error: HTTP ' . $response_code);
+                error_log('LeadConnector URL attempted: ' . $funnel_step_url);
+            }
+            return sprintf(
+                '<!-- Error: Received HTTP %d from URL: %s -->',
+                intval($response_code),
+                esc_html($funnel_step_url)
+            );
+        }
+
+        $iframe_content = wp_remote_retrieve_body($response);
+        
+        if (empty($iframe_content)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('LeadConnector Native Page Error: Empty response body');
+                error_log('LeadConnector URL attempted: ' . $funnel_step_url);
+            }
+            return '<!-- Error: Empty response received from funnel URL -->';
+        }
+
+        return $iframe_content;
     }
-    
+
     public function process_page_request()
     {
 
@@ -2073,7 +2189,7 @@ class LeadConnector_Admin
                 $lc_funnel_tracking_code = get_post_meta($post_id, "lc_funnel_tracking_code", true);
                 $lc_include_tracking_code = get_post_meta($post_id, "lc_include_tracking_code", true);
                 $lc_use_site_favicon = get_post_meta($post_id, "lc_use_site_favicon", true);
-
+                $lc_include_wp_headers_and_footers = get_post_meta($post_id, "lc_include_wp_headers_and_footers", true);
 
                 if (!$lc_include_tracking_code) {
                     $lc_step_trackingCode = null;
@@ -2082,6 +2198,20 @@ class LeadConnector_Admin
 
                 if ($lc_display_method == "iframe" || $lc_display_method == "native") {
 
+                    // Check if we should use WordPress headers and footers (for both iframe and native)
+                    if ($lc_include_wp_headers_and_footers && $lc_display_method == "native") {
+                        $this->setup_native_display_with_wp_headers(
+                            $lc_page,
+                            $funnel_step_url,
+                            $lc_post_meta,
+                            $lc_step_trackingCode,
+                            $lc_funnel_tracking_code,
+                            $lc_use_site_favicon
+                        );
+                        return;
+                    }
+
+                    // Standard rendering without WP headers/footers
                     if ($lc_display_method == "native") {
                         $content = $this->get_page_iframe_native($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon);
                     } else {
@@ -2177,4 +2307,582 @@ class LeadConnector_Admin
         }
         return new WP_REST_Response(array('status' => 'success'), 200);
     }
+
+    /**
+     * Setup native display with WordPress headers and footers
+     * For theme-agnostic header/footer support, using the content filter approach
+     * instead of custom template loading. This works with ALL themes including
+     *
+     * @param WP_Post $lc_page The page post object
+     * @param string $funnel_step_url The funnel step URL
+     * @param string $lc_post_meta Post meta data
+     * @param string $lc_step_trackingCode Step tracking code
+     * @param string $lc_funnel_tracking_code Funnel tracking code
+     * @param bool $lc_use_site_favicon Whether to use site favicon
+     */
+    private function setup_native_display_with_wp_headers($lc_page, $funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon) {
+        // Setup WordPress query to treat this as a valid page
+        $this->setup_wp_query_for_native_page($lc_page, $lc_post_meta);
+        
+        // Add content filter to inject native HTML into the page content
+        $this->add_native_content_filter($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon);
+        
+        // Add head content via wp_head action
+        $this->add_native_head_content($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon);
+        
+        // Add footer tracking code
+        $this->add_native_footer_tracking($lc_step_trackingCode, $lc_funnel_tracking_code);
+        
+        // Add body class for styling
+        $this->add_native_body_class();
+    }
+
+    /**
+     * Setup WordPress query variables for native page display
+     *
+     * @param WP_Post $lc_page The page post object
+     * @param string $lc_post_meta Post meta data containing title and other SEO fields
+     */
+    private function setup_wp_query_for_native_page($lc_page, $lc_post_meta = '') {
+        global $wp_query, $post;
+        
+        // Reset query vars to treat this as a valid page
+        $wp_query->is_404 = false;
+        $wp_query->is_page = true;
+        $wp_query->is_singular = true;
+        $wp_query->is_home = false;
+        $wp_query->found_posts = 1;
+        $wp_query->post_count = 1;
+        $wp_query->max_num_pages = 1;
+        
+        // Set the current post
+        $post = $lc_page;
+        $wp_query->post = $post;
+        $wp_query->posts = array($post);
+        $wp_query->queried_object = $post;
+        $wp_query->queried_object_id = $post->ID;
+        
+        // Setup post data properly
+        setup_postdata($post);
+        
+    }
+
+    /**
+     * Add content filter to inject native HTML content
+     *
+     * @param string $funnel_step_url The funnel step URL
+     * @param string $lc_post_meta Post meta data
+     * @param string $lc_step_trackingCode Step tracking code
+     * @param string $lc_funnel_tracking_code Funnel tracking code
+     * @param bool $lc_use_site_favicon Whether to use site favicon
+     */
+    private function add_native_content_filter($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon) {
+        add_filter('the_content', function($content) use ($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon) {
+            // Fetch and return native content
+            $native_html_content = $this->get_page_iframe_native($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon);
+            
+            if (!empty($native_html_content)) {
+                // Parse HTML to extract body content
+                $native_body_content = $this->extract_body_content($native_html_content);
+                return '<div class="lc-native-content">' . $native_body_content . '</div>';
+            }
+            
+            return '<div style="padding: 2em; text-align: center;"><h2>Error: Failed to load funnel content.</h2><p>Please check if the funnel URL is valid.</p></div>';
+        }, 10);
+    }
+
+    /**
+     * Extract body content from HTML
+     *
+     * Uses regex-based extraction to preserve HTML5 elements like video, source, etc.
+     * DOMDocument has issues with HTML5 self-closing tags like <source>
+     *
+     * @param string $html_content The full HTML content
+     * @return string The body content
+     */
+    private function extract_body_content($html_content) {
+        // Extract BODY content using regex to preserve HTML5 elements (video, source, etc.)
+        if (preg_match('/<body[^>]*>(.*)<\/body>/is', $html_content, $body_matches)) {
+            return $body_matches[1];
+        }
+        
+        // If no body tag found, try to strip doctype/html/head wrapper if present
+        $body_content = preg_replace('/^.*?<body[^>]*>/is', '', $html_content);
+        $body_content = preg_replace('/<\/body>.*$/is', '', $body_content);
+        
+        // If still no body content extracted, use original content
+        if (empty(trim($body_content))) {
+            return $html_content;
+        }
+        
+        return $body_content;
+    }
+
+    /**
+     * Add native head content via wp_head action
+     *
+     * @param string $funnel_step_url The funnel step URL
+     * @param string $lc_post_meta Post meta data
+     * @param string $lc_step_trackingCode Step tracking code
+     * @param string $lc_funnel_tracking_code Funnel tracking code
+     * @param bool $lc_use_site_favicon Whether to use site favicon
+     */
+    private function add_native_head_content($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon) {
+        add_action('wp_head', function() use ($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon) {
+            // Get native HTML and extract head content
+            $native_html_content = $this->get_page_iframe_native($funnel_step_url, $lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code, $lc_use_site_favicon);
+            
+            if (!empty($native_html_content)) {
+                $this->output_head_content($native_html_content);
+            }
+            
+            // Add meta fields and tracking codes
+            $this->output_meta_and_tracking($lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code);
+            
+            // Add favicon
+            $this->output_favicon($lc_use_site_favicon);
+            
+            // Add styling for full-width display
+            $this->output_native_page_styles();
+        }, 10);
+    }
+
+    /**
+     * Output head content from native HTML
+     *
+     * Uses regex-based extraction to preserve JavaScript and HTML5 elements.
+     * DOMDocument corrupts inline JavaScript which breaks Lead Connector's config (baseURL, etc.)
+     *
+     * @param string $html_content The full HTML content
+     */
+    private function output_head_content($html_content) {
+        // Add crypto.randomUUID polyfill for embeds like Loom that require it
+        echo '<script>
+            if (typeof crypto !== "undefined" && typeof crypto.randomUUID !== "function") {
+                crypto.randomUUID = function() {
+                    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+                        var r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
+                };
+            }
+        </script>';
+        
+        // Extract HEAD content using regex to preserve JavaScript exactly as-is
+        // DOMDocument corrupts inline JS which breaks Lead Connector's configuration
+        if (preg_match('/<head[^>]*>(.*?)<\/head>/is', $html_content, $head_matches)) {
+            $head_content = $head_matches[1];
+            
+            // Remove title tags as WordPress handles those
+            $head_content = preg_replace('/<title[^>]*>.*?<\/title>/is', '', $head_content);
+            
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted internal source from Lead Connector
+            echo $head_content;
+        }
+    }
+
+    /**
+     * Output meta fields and tracking codes in head
+     *
+     * @param string $lc_post_meta Post meta data
+     * @param string $lc_step_trackingCode Step tracking code
+     * @param string $lc_funnel_tracking_code Funnel tracking code
+     */
+    private function output_meta_and_tracking($lc_post_meta, $lc_step_trackingCode, $lc_funnel_tracking_code) {
+        $post_meta_fields = $this->get_meta_fields($lc_post_meta);
+        $head_tracking_code = $this->get_tracking_code($lc_funnel_tracking_code, true, true);
+        $head_tracking_code .= $this->get_tracking_code($lc_step_trackingCode, true);
+        
+        if (!empty($post_meta_fields)) {
+            echo $post_meta_fields;
+        }
+        if (!empty($head_tracking_code)) {
+            echo $head_tracking_code;
+        }
+    }
+
+    /**
+     * Output favicon if enabled
+     *
+     * @param bool $lc_use_site_favicon Whether to use site favicon
+     */
+    private function output_favicon($lc_use_site_favicon) {
+        if ($lc_use_site_favicon) {
+            $favicon_url = get_site_icon_url();
+            if ($favicon_url) {
+                echo '<link rel="icon" type="image/x-icon" href="' . esc_url($favicon_url) . '">';
+            }
+        }
+    }
+
+    /**
+     * Output native page styles for full-width display
+     */
+    private function output_native_page_styles() {
+        echo '<style>
+            /* Hide admin bar */
+            #wpadminbar { display: none !important; }
+            html { margin-top: 0 !important; }
+            
+            /* Hide the post title for native pages */
+            body.lc-native-page .entry-header,
+            body.lc-native-page .page-header,
+            body.lc-native-page h1.entry-title,
+            body.lc-native-page h1.page-title,
+            body.lc-native-page .wp-block-post-title {
+                display: none !important;
+            }
+            
+            /* Make content full width - theme agnostic */
+            body.lc-native-page .lc-native-content { 
+                width: 100vw !important;
+                max-width: 100vw !important;
+                margin-left: calc(50% - 50vw) !important;
+                margin-right: calc(50% - 50vw) !important;
+            }
+            
+            /* Remove all padding/margins from content containers */
+            body.lc-native-page .entry-content,
+            body.lc-native-page .post-content,
+            body.lc-native-page article,
+            body.lc-native-page main { 
+                padding: 0 !important; 
+                margin: 0 !important;
+                max-width: none !important;
+            }
+            
+            /* Override theme container constraints */
+            body.lc-native-page .wp-block-post-content,
+            body.lc-native-page .has-global-padding,
+            body.lc-native-page .is-layout-constrained {
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+            
+            /* Reduce excessive top/bottom padding on block groups */
+            body.lc-native-page .wp-block-group {
+                padding-top: 5px !important;
+                padding-bottom: 5px !important;
+            }
+            
+            /* Ensure container doesn\'t limit width */
+            body.lc-native-page .site-main,
+            body.lc-native-page .content-area {
+                max-width: none !important;
+            }
+        </style>';
+    }
+
+    /**
+     * Add footer tracking codes
+     *
+     * @param string $lc_step_trackingCode Step tracking code
+     * @param string $lc_funnel_tracking_code Funnel tracking code
+     */
+    private function add_native_footer_tracking($lc_step_trackingCode, $lc_funnel_tracking_code) {
+        add_action('wp_footer', function() use ($lc_step_trackingCode, $lc_funnel_tracking_code) {
+            $footer_tracking_code = $this->get_tracking_code($lc_funnel_tracking_code, false, true);
+            $footer_tracking_code .= $this->get_tracking_code($lc_step_trackingCode, false);
+            if (!empty($footer_tracking_code)) {
+                echo $footer_tracking_code;
+            }
+        }, 10);
+    }
+
+    /**
+     * Add body class for native pages
+     */
+    private function add_native_body_class() {
+        add_filter('body_class', function($classes) {
+            $classes[] = 'lc-native-page';
+            return $classes;
+        });
+    }
+
+    private function clear_host_cache(){
+        // Get The Site ID and the Cache Token 
+        
+        $cdn_site_id = defined('CDN_SITE_ID') ? CDN_SITE_ID : '';
+        $cdn_site_token = defined('CDN_SITE_TOKEN') ? CDN_SITE_TOKEN : '';
+        // Return the function if the siteId and siteToken are not set
+        if(empty($cdn_site_id) || empty($cdn_site_token)){
+            return false;
+        }
+        // Make API Call to Clear the Cache
+        $response = wp_remote_post('https://api.rocket.net/v1/sites/' . $cdn_site_id . '/cache/purge_everything', array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $cdn_site_token,
+            ),
+        ));
+        if(is_wp_error($response)){
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Clear cache from popular caching plugins
+     * This ensures that changes (like widget enable/disable) are reflected immediately
+     * 
+     * @since 1.0.0
+     * @return array Array of results with plugin names and success status
+     */
+    public function clear_all_caches() {
+        $results = array();
+        
+        // Define cache clearing methods for popular plugins
+        // Easy to add more plugins to this array
+        $cache_plugins = array(
+            // 1. WP Rocket
+            'wp_rocket' => array(
+                'name' => 'WP Rocket',
+                'check' => function() {
+                    return function_exists('rocket_clean_domain');
+                },
+                'clear' => function() {
+                    rocket_clean_domain();
+                    // Also clear minified CSS and JS
+                    if (function_exists('rocket_clean_minify')) {
+                        rocket_clean_minify();
+                    }
+                }
+            ),
+            
+            // 2. W3 Total Cache
+            'w3_total_cache' => array(
+                'name' => 'W3 Total Cache',
+                'check' => function() {
+                    return function_exists('w3tc_flush_all');
+                },
+                'clear' => function() {
+                    w3tc_flush_all();
+                }
+            ),
+            
+            // 3. WP Super Cache
+            'wp_super_cache' => array(
+                'name' => 'WP Super Cache',
+                'check' => function() {
+                    return function_exists('wp_cache_clear_cache');
+                },
+                'clear' => function() {
+                    global $file_prefix;
+                    wp_cache_clear_cache();
+                }
+            ),
+            
+            // 4. LiteSpeed Cache
+            'litespeed_cache' => array(
+                'name' => 'LiteSpeed Cache',
+                'check' => function() {
+                    return class_exists('LiteSpeed\Purge');
+                },
+                'clear' => function() {
+                    do_action('litespeed_purge_all');
+                }
+            ),
+            
+            // 5. WP Fastest Cache
+            'wp_fastest_cache' => array(
+                'name' => 'WP Fastest Cache',
+                'check' => function() {
+                    return class_exists('WpFastestCache');
+                },
+                'clear' => function() {
+                    if (class_exists('WpFastestCache')) {
+                        $wpfc = new WpFastestCache();
+                        $wpfc->deleteCache();
+                    }
+                }
+            ),
+            
+            // 6. Cache Enabler
+            'cache_enabler' => array(
+                'name' => 'Cache Enabler',
+                'check' => function() {
+                    return class_exists('Cache_Enabler');
+                },
+                'clear' => function() {
+                    if (class_exists('Cache_Enabler')) {
+                        Cache_Enabler::clear_total_cache();
+                    }
+                }
+            ),
+            
+            // 7. Comet Cache
+            'comet_cache' => array(
+                'name' => 'Comet Cache',
+                'check' => function() {
+                    return class_exists('comet_cache');
+                },
+                'clear' => function() {
+                    if (class_exists('comet_cache')) {
+                        comet_cache::clear();
+                    }
+                }
+            ),
+            
+            // 8. Hummingbird
+            'hummingbird' => array(
+                'name' => 'Hummingbird',
+                'check' => function() {
+                    return class_exists('Hummingbird\WP_Hummingbird');
+                },
+                'clear' => function() {
+                    do_action('wphb_clear_page_cache');
+                }
+            ),
+            
+            // 9. SiteGround Optimizer
+            'siteground_optimizer' => array(
+                'name' => 'SiteGround Optimizer',
+                'check' => function() {
+                    return function_exists('sg_cachepress_purge_cache');
+                },
+                'clear' => function() {
+                    sg_cachepress_purge_cache();
+                }
+            ),
+            
+            // 10. Autoptimize
+            'autoptimize' => array(
+                'name' => 'Autoptimize',
+                'check' => function() {
+                    return class_exists('autoptimizeCache');
+                },
+                'clear' => function() {
+                    if (class_exists('autoptimizeCache')) {
+                        autoptimizeCache::clearall();
+                    }
+                }
+            ),
+            
+            // 11. Swift Performance
+            'swift_performance' => array(
+                'name' => 'Swift Performance',
+                'check' => function() {
+                    return class_exists('Swift_Performance_Cache');
+                },
+                'clear' => function() {
+                    if (class_exists('Swift_Performance_Cache')) {
+                        Swift_Performance_Cache::clear_all_cache();
+                    }
+                }
+            ),
+            
+            // 12. Breeze (Cloudways)
+            'breeze' => array(
+                'name' => 'Breeze',
+                'check' => function() {
+                    return class_exists('Breeze_PurgeCache');
+                },
+                'clear' => function() {
+                    if (class_exists('Breeze_PurgeCache')) {
+                        Breeze_PurgeCache::breeze_cache_flush();
+                    }
+                }
+            ),
+            
+            // Add more caching plugins here as needed
+            // Template:
+            // 'plugin_key' => array(
+            //     'name' => 'Plugin Display Name',
+            //     'check' => function() {
+            //         return function_exists('plugin_function') || class_exists('Plugin_Class');
+            //     },
+            //     'clear' => function() {
+            //         // Code to clear cache
+            //     }
+            // ),
+        );
+        
+        // Try to clear cache for each detected plugin
+        foreach ($cache_plugins as $key => $plugin) {
+            try {
+                if (call_user_func($plugin['check'])) {
+                    call_user_func($plugin['clear']);
+                    $results[$key] = array(
+                        'name' => $plugin['name'],
+                        'success' => true,
+                        'message' => 'Cache cleared successfully'
+                    );
+                }
+            } catch (Exception $e) {
+                $results[$key] = array(
+                    'name' => $plugin['name'],
+                    'success' => false,
+                    'message' => 'Error: ' . $e->getMessage()
+                );
+            }
+        }
+        
+        // Also clear WordPress object cache if available
+        if (function_exists('wp_cache_flush')) {
+            wp_cache_flush();
+            $results['wp_object_cache'] = array(
+                'name' => 'WordPress Object Cache',
+                'success' => true,
+                'message' => 'Object cache flushed'
+            );
+        }
+        
+        // Clear opcache if available
+        if (function_exists('opcache_reset')) {
+            opcache_reset();
+            $results['opcache'] = array(
+                'name' => 'PHP OPcache',
+                'success' => true,
+                'message' => 'OPcache cleared'
+            );
+        }
+        // Clear System Cache -- Internal
+        $host_cache_clear_response = $this->clear_host_cache();
+        if($host_cache_clear_response){
+            $results['host_cache'] = array(
+                'name' => 'Host Cache',
+                'success' => true,
+                'message' => 'Host cache cleared'
+            );
+        }
+        
+        
+        return $results;
+    }
+    
+    /**
+     * Clear cache with admin notice feedback
+     * Wrapper function that can be called from hooks
+     * 
+     * @since 1.0.0
+     */
+    public function clear_cache_with_notice() {
+        $results = $this->clear_all_caches();
+        
+        $cleared_plugins = array_filter($results, function($result) {
+            return $result['success'];
+        });
+        echo '<pre>';
+        print_r($results);
+        echo '</pre>';
+        
+        
+        if (!empty($cleared_plugins)) {
+            $plugin_names = array_map(function($result) {
+                return $result['name'];
+            }, $cleared_plugins);
+            
+            $message = sprintf(
+                'LeadConnector: Cache cleared for %d plugin(s): %s',
+                count($cleared_plugins),
+                implode(', ', $plugin_names)
+            );
+            
+            add_action('admin_notices', function() use ($message) {
+                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($message) . '</p></div>';
+            });
+        }
+        
+        return $results;
+    }
 }
+

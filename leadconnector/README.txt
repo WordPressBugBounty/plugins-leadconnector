@@ -4,7 +4,7 @@ Tags: crm, lead connector
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 5.6
-Stable tag: 3.0.10.5
+Stable tag: 3.0.21
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,11 +45,48 @@ The LeadConnector plugin helps you install the text to chat widget to your wordp
 
 == Changelog ==
 
-== 3.0.10.5 - 2025-09-22 ==
-* Resolved : Plugin breaking issue with Advanced Custom Fields
+== 3.0.21 - 2026-02-03
+* Fix: Resolved login failures when WordPress is installed in a sub folder configuration
+* Fix: Addressed cache issues when updating settings. Cache now auto refreshes whenever changes are made
+* Minor copy changes
+
+-- 3.0.20 - 2026-01-29
+* Fix: Plugin breaking in case of Permalinks structure set to plain
+
+-- 3.0.19 - 2026-01-28
+* Enhancement: CDN cache purge option now has broader visibility
+
+== 3.0.18 - 2026-01-13
+* Fixed : Layout shift on left side in some themes 
+* Fixed : External Video embedding issues in funnels
+* Minor copy changes
+
+== 3.0.17 - 2025-12-08
+* Feature: Introduced AI-Powered WordPress Page Builder to create full landing pages, blogs, and e-commerce layouts within seconds using guided AI flows
+* Fix: Resolved issues with template loading conflicts caused by certain third-party theme overrides
+* Fix: Addressed minor UI inconsistencies in the builder panel across different WordPress versions
+
+== 3.0.16 - 2025-11-25
+* Enhancement: Added support to include WordPress Header and Footer in Funnels via HTML Embed
+* Minor copy changes
+
+== 3.0.15 - 2025-11-24
+* Fixed : Fixed UI Breaking in some conditions when a banner is present on top
+
+== 3.0.14 - 2025-11-10
+* Fixed : Embedded HTML Issue 
+
+== 3.0.13 - 2025-11-04
+* Feature : Review Widgets, Calendars, Surveys & Quizzes
+
+== 3.0.12 - 2025-10-28 ==
+* Feature : LeadConnector powered SEO capabilities
 
 == 3.0.11 - 2025-09-11 ==
 * Implements Added a new feature that allows integration of custom values into WordPress.
+
+== 3.0.10.5 - 2025-09-22 ==
+* Resolved : Plugin breaking issue with Advanced Custom Fields
 
 = 3.0.10.4 - 2025-08-26 =
 * Added support for Right-to-Left (RTL) languages in plugin

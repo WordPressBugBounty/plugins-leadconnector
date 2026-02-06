@@ -16,7 +16,7 @@
  * Plugin Name:       LeadConnector
  * Plugin URI:        https://www.leadconnectorhq.com/wp_plugin
  * Description:       This plugin helps you to add the lead connector widgets to your website.
- * Version:           3.0.10.5
+ * Version:           3.0.21
  * Author:            LeadConnector
  * Author URI:        https://www.leadconnectorhq.com
  * License:           GPL-2.0+
@@ -53,12 +53,16 @@ if (file_exists(__DIR__ . '/config.php')) {
     define('LEAD_CONNECTOR_OAUTH_CLIENT_ID', '6705407d183014f80462d9f1-m20kdypv');
 }
 
+// Constants That are required by plugin that are not part of the default config.php 
+define('LEAD_CONNECTOR_OAUTH_CALLBACK_URL', get_option('siteurl', '__missing_siteurl__'));
+
 /**
  * Add custom query variables to WordPress
  */
 function lead_connector_add_custom_query_vars($vars) {
     $vars[] = 'code';
     $vars[] = 'lc_code';
+    $vars[] = 'elementor_highlight';
     // Add any additional custom parameters here
     return $vars;
 }
@@ -101,6 +105,10 @@ register_deactivation_hook(__FILE__, 'deactivate_lead_connector');
 require plugin_dir_path(__FILE__) . 'includes/class-lc.php';
 require plugin_dir_path(__FILE__) . 'includes/lc-update-functions.php';
 
+// Add Elementor CLI
+require plugin_dir_path(__FILE__) . 'includes/lc-elementor-cli.php';
+require plugin_dir_path(__FILE__) . 'includes/SeoOverrides/seo-overrides.php';
+
 /**
  * Begins execution of the plugin.
  *
@@ -140,3 +148,45 @@ function lead_connector_uninstall_plugin() {
     
     // Clean up options and other data if needed
 }
+
+function custom_elementor_styles() {
+    // Only load on pages that use Elementor
+    if (!did_action('elementor/loaded') && !class_exists('\Elementor\Plugin')) {
+        return;
+    }
+    
+    // Check if current page is built with Elementor
+    $post_id = get_the_ID();
+    if (!$post_id || !get_post_meta($post_id, '_elementor_edit_mode', true)) {
+        return;
+    }
+
+    // Register the CSS file
+    wp_register_style(
+        'elementor-overrides',
+        plugin_dir_url(__FILE__) . 'assets/css/custom-elementor.css',
+        array(),
+        '1.0.0'
+    );
+
+    wp_enqueue_style('elementor-overrides');
+}
+add_action('wp_enqueue_scripts', 'custom_elementor_styles');
+
+/**
+ * Load theme fixes CSS on all frontend pages
+ * Fixes responsive header padding for block themes
+ */
+function lead_connector_theme_fixes() {
+    $css_file = plugin_dir_path(__FILE__) . 'assets/css/theme-fixes.css';
+    $version = file_exists($css_file) ? filemtime($css_file) : LEAD_CONNECTOR_VERSION;
+    
+    wp_enqueue_style(
+        'lc-theme-fixes',
+        plugin_dir_url(__FILE__) . 'assets/css/theme-fixes.css',
+        array(),
+        $version
+    );
+}
+add_action('wp_enqueue_scripts', 'lead_connector_theme_fixes');
+

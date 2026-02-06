@@ -210,6 +210,101 @@ class LeadConnector_Loader
 
         add_shortcode('lc_form', 'lc_forms_embed');
 
+        function lc_calendar_embed( $params ){
+
+            // Accept either slug or id; prefer slug. If only id is provided, use it as slug fallback
+            $slug = isset($params['slug']) ? lc_sanitize_and_escape($params['slug'], 'id') : '';
+            $id   = isset($params['id'])   ? lc_sanitize_and_escape($params['id'], 'id')   : '';
+            if ($slug === '' && $id !== '') {
+                $slug = $id;
+            }
+
+            // Optional overrides
+            $height = isset($params['height']) ? lc_sanitize_and_escape($params['height'], 'attr') : '750';
+            $class  = isset($params['class'])  ? lc_sanitize_and_escape($params['class'], 'attr')  : '';
+            $title  = isset($params['title'])  ? lc_sanitize_and_escape($params['title'], 'text')  : 'LeadConnector Calendar';
+
+            if ($slug === '') {
+                return '<div class="lc-calendar-error">Calendar slug or id is required.</div>';
+            }
+
+            $iframe_base = LC_CALENDAR_IFRAME_BASE_URL;
+            $script_src = LC_FORM_EMBED_SCRIPT_URL;
+
+            // Use id in booking path per reference
+            $iframe_src = sprintf('%s/widget/booking/%s', $iframe_base, $slug);
+            $iframe_id = $slug . '_' . time();
+
+            return sprintf(
+                '<iframe src="%s" style="width: 100%%;border:none;overflow: hidden;" scrolling="no" id="%s" class="%s" title="%s"></iframe><br><script src="%s" type="text/javascript"></script>',
+                esc_url($iframe_src),
+                esc_attr($iframe_id),
+                esc_attr($class),
+                esc_attr($title),
+                esc_url($script_src)
+            );
+        }
+
+        add_shortcode('lc_calendar', 'lc_calendar_embed');
+
+        function lc_surveys_embed( $params ){
+
+            $surveyId = isset( $params['id'] ) ? lc_sanitize_and_escape( $params['id'], 'id' ) : '';
+            $surveyTitle = isset( $params['title'] ) ? lc_sanitize_and_escape( $params['title'], 'text' ) : '';
+            return "
+                <iframe src=\"".LC_SURVEY_WIDGET_BASE_URL."/widget/survey/$surveyId\"
+                    style=\"border:none;width:100%;\" scrolling=\"no\" id=\"$surveyId\"
+                    title=\"$surveyTitle\">
+                </iframe>
+                <script src=\"".LC_FORM_EMBED_SCRIPT_URL."\"></script>
+            ";
+        }
+
+        add_shortcode('lc_survey', 'lc_surveys_embed');
+
+        function lc_quizzes_embed( $params ){
+
+            $quizId = isset( $params['id'] ) ? lc_sanitize_and_escape( $params['id'], 'id' ) : '';
+            $quizTitle = isset( $params['title'] ) ? lc_sanitize_and_escape( $params['title'], 'text' ) : '';
+            return "
+                <iframe src=\"".LC_QUIZ_WIDGET_BASE_URL."/widget/quiz/$quizId\"
+                    style=\"border:none;width:100%;\" scrolling=\"no\" id=\"$quizId\"
+                    title=\"$quizTitle\">
+                </iframe>
+                <script src=\"".LC_FORM_EMBED_SCRIPT_URL."\"></script>
+            ";
+        }
+
+        add_shortcode('lc_quiz', 'lc_quizzes_embed');
+        
+        /**
+         * Reviews Widget Shortcode Handler
+         * 
+         * Usage: [lc_reviews_widget id='widgetId' title='Widget Title']
+         * 
+         * @param array $params Shortcode parameters
+         * @return string HTML output for the reviews widget
+         */
+        function lc_reviews_widget_embed($params) {
+            $options = get_option(LEAD_CONNECTOR_OPTION_NAME);
+            $location_id = lc_sanitize_and_escape( $options[ lead_connector_constants\lc_options_location_id ] ?? '', 'id' );
+            $widgetId = isset($params['id']) ? lc_sanitize_and_escape($params['id'], 'id') : '';
+            $widgetTitle = isset($params['title']) ? lc_sanitize_and_escape($params['title'], 'text') : 'Review Widget';
+            
+            // Check if current user is admin
+            $isAdmin = current_user_can('administrator');
+            
+            // Build URL parameters
+            $urlParams = "widgetId=$widgetId&source=lcwordpress";
+            if ($isAdmin) {
+                $urlParams .= "&isPreview=true";
+            }
+            
+            return "<style>iframe.lc_reviews_widget{width: inherit !important;}</style><script type='text/javascript' src='" . LC_REPUTATION_WIDGET_SCRIPT_URL . "'></script><iframe class='lc_reviews_widget' src='" . LC_REPUTATION_WIDGET_BASE_URL . "/$location_id?$urlParams' frameborder='0' scrolling='no' style='min-width: 100%; width: 100%;'></iframe>";
+        }
+
+        add_shortcode('lc_reviews_widget', 'lc_reviews_widget_embed');
+
         function schedule_oauth_refresh_cron(){
             // Schedules the event if it's NOT already scheduled.
             if ( ! wp_next_scheduled ( 'lc_twicedaily_refresh_req_v2' ) ) {

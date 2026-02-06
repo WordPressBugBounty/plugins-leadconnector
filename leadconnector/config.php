@@ -1,7 +1,7 @@
 <?php
 // Auto-generated configuration file. Do not edit directly.
 
-if (!defined('LEAD_CONNECTOR_VERSION')) define('LEAD_CONNECTOR_VERSION', '3.0.10.5');
+if (!defined('LEAD_CONNECTOR_VERSION')) define('LEAD_CONNECTOR_VERSION', '3.0.21');
 if (!defined('LEAD_CONNECTOR_PLUGIN_NAME')) define('LEAD_CONNECTOR_PLUGIN_NAME', 'LeadConnector');
 if (!defined('LEAD_CONNECTOR_SERVICES_BASE_URL')) define('LEAD_CONNECTOR_SERVICES_BASE_URL', 'https://services.leadconnectorhq.com/');
 if (!defined('LEAD_CONNECTOR_OPTION_NAME')) define('LEAD_CONNECTOR_OPTION_NAME', 'lead_connector_plugin_options');
@@ -16,3 +16,9 @@ if (!defined('LC_CHAT_WIDGET_SRC')) define('LC_CHAT_WIDGET_SRC', 'https://widget
 if (!defined('LC_CHAT_WIDGET_RESOURCES_URL')) define('LC_CHAT_WIDGET_RESOURCES_URL', 'https://widgets.leadconnectorhq.com/chat-widget/loader.js');
 if (!defined('LC_CHAT_WIDGET_SERVER_URL')) define('LC_CHAT_WIDGET_SERVER_URL', 'https://services.leadconnectorhq.com/forms');
 if (!defined('LC_CHAT_WIDGET_MARKETPLACE_URL')) define('LC_CHAT_WIDGET_MARKETPLACE_URL', 'https://services.leadconnectorhq.com');
+if (!defined('LC_SURVEY_WIDGET_BASE_URL')) define('LC_SURVEY_WIDGET_BASE_URL', 'https://api.leadconnectorhq.com');
+if (!defined('LC_QUIZ_WIDGET_BASE_URL')) define('LC_QUIZ_WIDGET_BASE_URL', 'https://api.leadconnectorhq.com');
+if (!defined('LC_FORM_EMBED_SCRIPT_URL')) define('LC_FORM_EMBED_SCRIPT_URL', 'https://link.msgsndr.com/js/form_embed.js');
+if (!defined('LC_CALENDAR_IFRAME_BASE_URL')) define('LC_CALENDAR_IFRAME_BASE_URL', 'https://api.leadconnectorhq.com');
+if (!defined('LC_REPUTATION_WIDGET_SCRIPT_URL')) define('LC_REPUTATION_WIDGET_SCRIPT_URL', 'https://reputationhub.site/reputation/assets/review-widget.js');
+if (!defined('LC_REPUTATION_WIDGET_BASE_URL')) define('LC_REPUTATION_WIDGET_BASE_URL', 'https://reputationhub.site/reputation/widgets/review_widget');
