@@ -4,7 +4,7 @@ Tags: crm, lead connector
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 5.6
-Stable tag: 3.0.21
+Stable tag: 3.0.22
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,9 @@ The LeadConnector plugin helps you install the text to chat widget to your wordp
 5. View and Manage All Your Pages
 
 == Changelog ==
+
+== 3.0.22 - 2026-02-16
+* Security Patches
 
 == 3.0.21 - 2026-02-03
 * Fix: Resolved login failures when WordPress is installed in a sub folder configuration

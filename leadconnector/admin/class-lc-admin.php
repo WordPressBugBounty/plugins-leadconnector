@@ -1117,17 +1117,24 @@ class LeadConnector_Admin
     {
         if (!$response['error'] && isset($response['body']->data)) {
             $url = get_rest_url(null, 'lc_internal_api/v1/save_custom_values');
+            
+            // Collect all cookies including WordPress auth cookies
             $cookies = array();
             foreach ($_COOKIE as $name => $value) {
                 $cookies[] = new WP_Http_Cookie(array('name' => $name, 'value' => $value));
             }
+            
             wp_remote_post($url, array(
                 'method' => 'POST',
-                'headers' => array('Content-Type' => 'application/json; charset=utf-8'),
+                'headers' => array(
+                    'Content-Type' => 'application/json; charset=utf-8',
+                    'X-WP-Nonce' => wp_create_nonce('wp_rest')
+                ),
                 'body' => json_encode(array('custom_values' => $response['body']->data)),
                 'blocking' => false,
                 'timeout' => 1,
-                'cookies' => $cookies
+                'cookies' => $cookies,
+                'sslverify' => true // Host has to verify the SSL certificate of the site no unsecured connections
             ));
         }
     }
@@ -1893,7 +1900,10 @@ class LeadConnector_Admin
         register_rest_route('lc_internal_api/v1', '/save_custom_values', array(
             'methods' => WP_REST_Server::CREATABLE,
             'callback' => array($this, 'lc_async_save_custom_values'),
-            'permission_callback' => '__return_true', // Internal endpoint, security is handled by cookie auth
+            'permission_callback' => function() {
+                // Allow any logged-in user to save custom values
+                return is_user_logged_in() && current_user_can('manage_options');
+            }
         ));
     }
 
