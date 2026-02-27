@@ -175,8 +175,7 @@ class LeadConnector
         $this->loader->add_action('admin_init', $plugin_admin, 'register_settings');
         $this->loader->add_action('template_redirect', $plugin_admin, 'process_page_request', 1, 2);
 
-        // add_action( 'admin_init', 'wporg_settings_init' );
-
+        $this->loader->add_action('save_post', $plugin_admin, 'maybe_clear_all_caches', 10, 2);
     }
 
     /**

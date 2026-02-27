@@ -1,10 +1,10 @@
 === LeadConnector ===
 link: https://www.leadconnectorhq.com
-Tags: crm, lead connector
+Tags: lead connector, leadconnector, chat widget, crm, funnel, forms, smtp, email, phone, phone numbers, phone, custom values, calendar, reviews, reviews widget, surveys, quizzes
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 5.6
-Stable tag: 3.0.22
+Stable tag: 3.0.23
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,10 @@ The LeadConnector plugin helps you install the text to chat widget to your wordp
 5. View and Manage All Your Pages
 
 == Changelog ==
+
+== 3.0.23 - 2026-02-26
+* Fix: Chat Widget not working in some cases
+* Minor copy changes
 
 == 3.0.22 - 2026-02-16
 * Security Patches

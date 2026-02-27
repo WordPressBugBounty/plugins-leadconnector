@@ -353,17 +353,26 @@ class LeadConnector_Public
                 if (isset($options[lead_connector_constants\lc_options_selected_chat_widget_id])) {
 
                     $widgetId = $options[lead_connector_constants\lc_options_selected_chat_widget_id];
-                    // Add the widget code to wp_head for loading on all public pages
+
                     add_action('wp_head', function () use ($widgetId) {
-                        // Using proper WordPress functions to output scripts safely
-                        echo sprintf(
-                            '<script src="%s" data-resources-url="%s" data-widget-id="%s" data-server-u-r-l="%s" data-marketplace-u-r-l="%s"></script>',
-                            esc_url(LC_CHAT_WIDGET_SRC),
-                            esc_url(LC_CHAT_WIDGET_RESOURCES_URL),
-                            esc_attr($widgetId),
-                            esc_url(LC_CHAT_WIDGET_SERVER_URL),
-                            esc_url(LC_CHAT_WIDGET_MARKETPLACE_URL)
-                        );
+                        $config = wp_json_encode(array(
+                            'src'            => LC_CHAT_WIDGET_SRC,
+                            'resourcesUrl'   => LC_CHAT_WIDGET_RESOURCES_URL,
+                            'widgetId'       => $widgetId,
+                            'serverUrl'      => LC_CHAT_WIDGET_SERVER_URL,
+                            'marketplaceUrl' => LC_CHAT_WIDGET_MARKETPLACE_URL,
+                        ));
+
+                        echo '<script data-no-optimize="1" data-no-minify="1">'
+                            . '(function(){var c=' . $config . ';'
+                            . 'var s=document.createElement("script");'
+                            . 's.src=c.src;'
+                            . 's.setAttribute("data-resources-url",c.resourcesUrl);'
+                            . 's.setAttribute("data-widget-id",c.widgetId);'
+                            . 's.setAttribute("data-server-u-r-l",c.serverUrl);'
+                            . 's.setAttribute("data-marketplace-u-r-l",c.marketplaceUrl);'
+                            . 'document.head.appendChild(s);'
+                            . '})();</script>';
                     });
                 }
             }

@@ -34,7 +34,6 @@ class LeadConnector_CustomValues{
             return;
         }
 
-        $query = "INSERT INTO {$this->table_name} (field_key, field_id) VALUES ";
         $placeholders = [];
         $values = [];
 
@@ -47,8 +46,11 @@ class LeadConnector_CustomValues{
         }
 
         if (!empty($values)) {
-            $query .= implode(', ', $placeholders);
-            $query .= " ON DUPLICATE KEY UPDATE field_id = VALUES(field_id)";
+            // Build query with placeholders
+            $placeholders_string = implode(', ', $placeholders);
+            $query = "INSERT INTO {$this->table_name} (field_key, field_id) VALUES {$placeholders_string} ON DUPLICATE KEY UPDATE field_id = VALUES(field_id)";
+            
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is properly prefixed and placeholders are used for values
             $this->wpdb->query($this->wpdb->prepare($query, $values));
         }
     }
@@ -163,6 +165,7 @@ class LeadConnector_CustomValues{
     }
     public function remove_all_cached_custom_values_transients(){
         // Delete all transients with the lc_field_id_value_ prefix
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentionally clearing transients directly for performance
         $this->wpdb->query(
             $this->wpdb->prepare(
                 "DELETE FROM {$this->wpdb->options} 

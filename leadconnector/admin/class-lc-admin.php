@@ -2631,6 +2631,35 @@ class LeadConnector_Admin
     }
 
     /**
+     * Conditionally clear caches on save_post, skipping autosaves,
+     * revisions, and non-public post types to avoid excessive cache purges.
+     *
+     * @since 1.0.0
+     * @param int     $post_id
+     * @param WP_Post $post
+     */
+    public function maybe_clear_all_caches($post_id, $post) {
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return;
+        }
+
+        if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
+            return;
+        }
+
+        if ($post->post_status !== 'publish') {
+            return;
+        }
+
+        $public_types = get_post_types(array('public' => true));
+        if (!in_array($post->post_type, $public_types, true)) {
+            return;
+        }
+
+        $this->clear_all_caches();
+    }
+
+    /**
      * Clear cache from popular caching plugins
      * This ensures that changes (like widget enable/disable) are reflected immediately
      * 
