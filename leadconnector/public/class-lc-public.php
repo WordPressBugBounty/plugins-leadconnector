@@ -440,6 +440,8 @@ class LeadConnector_Public
             (function() {
                 'use strict';
                 
+                var highlightEnabled = true;
+                
                 // Throttle function to limit event frequency
                 function throttle(func, limit) {
                     let inThrottle;
@@ -492,6 +494,7 @@ class LeadConnector_Public
                 
                 // Send click function (no throttling needed for clicks)
                 const sendClick = function(element, elementType) {
+                    if (!highlightEnabled) return;
                     sendToParent('elementor-click', element, elementType);
                 };
                 
@@ -593,9 +596,95 @@ class LeadConnector_Public
                         const messageType = event.data.type;
                         const messageData = event.data.data;
                         
-                        // Handle updateContent message
+                        if (messageType === 'toggleHighlight') {
+                            highlightEnabled = !!(messageData && messageData.enabled);
+                            var styleTag = document.getElementById('leadconnector-elementor-highlight');
+                            if (styleTag) styleTag.disabled = !highlightEnabled;
+                        }
                         if (messageType === 'updateContent') {
                             updateHeroContent(messageData);
+                        }
+                        if (messageType === 'updateColors') {
+                            applyPreviewColors(messageData);
+                        }
+                    }
+                }
+                
+                function normalizeHex(value) {
+                    if (!value || typeof value !== 'string') return '';
+                    value = value.trim();
+                    var m = value.match(/^#([0-9A-Fa-f]{6})$/);
+                    if (m) return '#' + m[1].toLowerCase();
+                    var m8 = value.match(/^#([0-9A-Fa-f]{6})([0-9A-Fa-f]{2})$/);
+                    if (m8) return '#' + m8[1].toLowerCase();
+                    var rgb = value.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/);
+                    if (rgb) {
+                        var r = parseInt(rgb[1], 10); var g = parseInt(rgb[2], 10); var b = parseInt(rgb[3], 10);
+                        return '#' + [r, g, b].map(function(n) { var h = n.toString(16); return h.length === 1 ? '0' + h : h; }).join('');
+                    }
+                    var rgba = value.match(/^rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*[\d.]+\s*\)$/);
+                    if (rgba) {
+                        var r = parseInt(rgba[1], 10); var g = parseInt(rgba[2], 10); var b = parseInt(rgba[3], 10);
+                        return '#' + [r, g, b].map(function(n) { var h = n.toString(16); return h.length === 1 ? '0' + h : h; }).join('');
+                    }
+                    return value;
+                }
+                
+                var COLOR_KEYS = ['primary', 'secondary', 'accent', 'light_neutral', 'light_neutral_text'];
+
+                function escapeRegex(str) {
+                    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                }
+
+                function applyPreviewColors(data) {
+                    var currentColors = data && data.current;
+                    var newColors = data && data.new;
+
+                    if (!currentColors || !newColors) {
+                        return;
+                    }
+
+                    var replacements = [];
+                    for (var k = 0; k < COLOR_KEYS.length; k++) {
+                        var key = COLOR_KEYS[k];
+                        var orig = normalizeHex(currentColors[key]);
+                        var target = normalizeHex(newColors[key]);
+                        if (orig && target && orig !== target) {
+                            replacements.push({ orig: orig, target: target, key: key });
+                        }
+                    }
+
+                    if (replacements.length === 0) {
+                        return;
+                    }
+
+                    var updated = 0;
+
+                    // Replace in <style> tags
+                    var styleTags = document.querySelectorAll('style');
+                    for (var s = 0; s < styleTags.length; s++) {
+                        var text = styleTags[s].textContent;
+                        var mod = false;
+                        for (var r = 0; r < replacements.length; r++) {
+                            var re = new RegExp(escapeRegex(replacements[r].orig), 'gi');
+                            var m = text.match(re);
+                            if (m) { updated += m.length; text = text.replace(re, replacements[r].target); mod = true; }
+                        }
+                        if (mod) styleTags[s].textContent = text;
+                    }
+
+                    // Replace inline / computed styles on elements
+                    var nodes = document.body.querySelectorAll('*');
+                    for (var i = 0; i < nodes.length; i++) {
+                        var el = nodes[i];
+                        var cs = window.getComputedStyle(el);
+                        var bgHex = normalizeHex(cs.backgroundColor);
+                        var fgHex = normalizeHex(cs.color);
+                        for (var r = 0; r < replacements.length; r++) {
+                            if (bgHex === replacements[r].orig) { el.style.backgroundColor = replacements[r].target; updated++; break; }
+                        }
+                        for (var r = 0; r < replacements.length; r++) {
+                            if (fgHex === replacements[r].orig) { el.style.color = replacements[r].target; updated++; break; }
                         }
                     }
                 }

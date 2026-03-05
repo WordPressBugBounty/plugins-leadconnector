@@ -16,7 +16,7 @@
  * Plugin Name:       LeadConnector
  * Plugin URI:        https://www.leadconnectorhq.com/wp_plugin
  * Description:       This plugin helps you to add the lead connector widgets to your website.
- * Version:           3.0.23
+ * Version:           3.0.24
  * Author:            LeadConnector
  * Author URI:        https://www.leadconnectorhq.com
  * License:           GPL-2.0+
@@ -74,6 +74,7 @@ add_filter('query_vars', 'lead_connector_add_custom_query_vars');
  */
 function activate_lead_connector()
 {
+    require_once plugin_dir_path(__FILE__) . 'includes/lc-constants.php';
     require_once plugin_dir_path(__FILE__) . 'includes/class-lc-activator.php';
     LeadConnector_Activator::activate();
     
