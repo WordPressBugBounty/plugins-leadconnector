@@ -427,14 +427,58 @@ class LeadConnector_Public
                 pointer-events: none;
             } */
 
-            /* Elementor Elements - Blue highlight - COMMENTED OUT: will visit later */
-            /* .elementor-element:hover:not(.elementor-widget-heading):not(.elementor-element.elementor-widget-heading):not(.elementor-widget-text-editor):not(.elementor-element.elementor-widget-text-editor),
-            .elementor-section:hover {
-                outline: 2px dashed #3b82f6 !important;
-                outline-offset: 4px !important;
+            /* Image widgets - highlight on hover  */
+            .hero-image-class,
+            .about-us-image-class {
                 position: relative !important;
+            }
+            .hero-image-class:hover,
+            .about-us-image-class:hover {
                 cursor: pointer !important;
-            } */
+            }
+
+            .hero-image-class img,
+            .about-us-image-class img {
+                transition: filter 0.2s ease;
+            }
+            .hero-image-class:hover img,
+            .about-us-image-class:hover img {
+                filter: blur(3px);
+            }
+
+            /* Regenerate Image overlay button - !important to override Elementor button styles */
+            .lc-regenerate-image-overlay {
+                position: absolute !important;
+                z-index: 9999 !important;
+                display: none;
+                align-items: center !important;
+                padding: 10px 20px !important;
+                background: #fff !important;
+                color: #1a1a1a !important;
+                border: none !important;
+                border-radius: 999px !important;
+                font-size: 14px !important;
+                font-weight: 600 !important;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                cursor: pointer !important;
+                white-space: nowrap !important;
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15) !important;
+                transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+                line-height: 1 !important;
+                text-transform: none !important;
+                letter-spacing: normal !important;
+                min-height: auto !important;
+            }
+            .lc-regenerate-image-overlay:hover {
+                transform: translate(-50%, -50%) scale(1.05) !important;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+                background: #fff !important;
+                color: #1a1a1a !important;
+            }
+            .hero-image-class:hover .lc-regenerate-image-overlay,
+            .about-us-image-class:hover .lc-regenerate-image-overlay {
+                display: flex;
+            }
         </style>
         <script id="leadconnector-elementor-hover-events">
             (function() {
@@ -550,6 +594,74 @@ class LeadConnector_Public
                         elementsWithListeners.add(element);
                     });
                     
+                    // Image elements - inject overlay button and click handler
+                    // Scoped to hero/about-us template classes only so the plugin can ship without FE/BE and
+                    // without attaching to every .elementor-widget-image (backward compatible for existing sites).
+                    var imageElements = document.querySelectorAll('.hero-image-class, .about-us-image-class');
+                    imageElements.forEach(function(element) {
+                        if (elementsWithListeners.has(element)) return;
+
+                        var img = element.querySelector('img');
+                        if (!img) { elementsWithListeners.add(element); return; }
+
+                        if (window.getComputedStyle(element).position === 'static') {
+                            element.style.position = 'relative';
+                        }
+
+                        var overlay = document.createElement('button');
+                        overlay.className = 'lc-regenerate-image-overlay';
+                        if (!highlightEnabled) overlay.style.display = 'none';
+                        overlay.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-right:6px;vertical-align:middle;display:inline-block"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>Regenerate Image';
+                        element.appendChild(overlay);
+
+                        // Position overlay centered over the actual <img>
+                        function positionOverlay() {
+                            var imgRect = img.getBoundingClientRect();
+                            var parentRect = element.getBoundingClientRect();
+                            overlay.style.left = ((imgRect.left - parentRect.left) + imgRect.width / 2) + 'px';
+                            overlay.style.top = ((imgRect.top - parentRect.top) + imgRect.height / 2) + 'px';
+                            overlay.style.transform = 'translate(-50%, -50%)';
+                        }
+
+                        // Reposition on every hover so it's always correct
+                        element.addEventListener('mouseenter', positionOverlay);
+                        // Also position after image loads
+                        if (!img.complete) { img.addEventListener('load', positionOverlay); }
+                        positionOverlay();
+
+
+                        var elementType = element.classList.contains('hero-image-class')
+                            ? 'hero-image-class'
+                            : (element.classList.contains('about-us-image-class') ? 'about-us-image-class' : '');
+
+                        overlay.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!highlightEnabled) return;
+
+                            var img = element.querySelector('img');
+                            var imgSrc = img ? (img.getAttribute('src') || '') : '';
+                            var naturalWidth = img ? img.naturalWidth : 0;
+                            var naturalHeight = img ? img.naturalHeight : 0;
+
+                            try {
+                                if (window.parent && window.parent !== window) {
+                                    window.parent.postMessage({
+                                        source: 'leadconnector-elementor-iframe',
+                                        type: 'image-click',
+                                        elementType: elementType,
+                                        imageUrl: imgSrc,
+                                        dimensions: { width: naturalWidth, height: naturalHeight }
+                                    }, '*');
+                                }
+                            } catch (err) {
+                                console.warn('LeadConnector: Could not send image-click to parent', err);
+                            }
+                        }, { capture: true });
+
+                        elementsWithListeners.add(element);
+                    });
+
                     // Other Elementor elements (not headings or text-editor) - COMMENTED OUT: will visit later
                     /* const otherElements = document.querySelectorAll('.elementor-element:not(.elementor-widget-heading):not(.elementor-element.elementor-widget-heading):not(.elementor-widget-text-editor):not(.elementor-element.elementor-widget-text-editor):not(.elementor-section)');
                     otherElements.forEach(function(element) {
@@ -600,6 +712,13 @@ class LeadConnector_Public
                             highlightEnabled = !!(messageData && messageData.enabled);
                             var styleTag = document.getElementById('leadconnector-elementor-highlight');
                             if (styleTag) styleTag.disabled = !highlightEnabled;
+                            // Hide/show all regenerate overlay buttons
+                            var overlays = document.querySelectorAll('.lc-regenerate-image-overlay');
+                            for (var oi = 0; oi < overlays.length; oi++) {
+                                // When disabled: force hide with inline display:none
+                                // When enabled: clear inline style so CSS :hover rules take over
+                                overlays[oi].style.display = highlightEnabled ? '' : 'none';
+                            }
                         }
                         if (messageType === 'updateContent') {
                             updateHeroContent(messageData);
