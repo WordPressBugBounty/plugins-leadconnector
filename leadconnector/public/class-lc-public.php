@@ -354,7 +354,7 @@ class LeadConnector_Public
 
                     $widgetId = $options[lead_connector_constants\lc_options_selected_chat_widget_id];
 
-                    add_action('wp_head', function () use ($widgetId) {
+                    add_action('wp_footer', function () use ($widgetId) {
                         $config = wp_json_encode(array(
                             'src'            => LC_CHAT_WIDGET_SRC,
                             'resourcesUrl'   => LC_CHAT_WIDGET_RESOURCES_URL,
@@ -371,7 +371,7 @@ class LeadConnector_Public
                             . 's.setAttribute("data-widget-id",c.widgetId);'
                             . 's.setAttribute("data-server-u-r-l",c.serverUrl);'
                             . 's.setAttribute("data-marketplace-u-r-l",c.marketplaceUrl);'
-                            . 'document.head.appendChild(s);'
+                            . 'document.body.appendChild(s);'
                             . '})();</script>';
                     });
                 }

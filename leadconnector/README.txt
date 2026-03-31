@@ -4,7 +4,7 @@ Tags: lead connector, leadconnector, chat widget, crm, funnel, forms, smtp, emai
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 5.6
-Stable tag: 3.0.25
+Stable tag: 3.0.26
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,9 @@ The LeadConnector plugin helps you install the text to chat widget to your wordp
 5. View and Manage All Your Pages
 
 == Changelog ==
+
+== 3.0.26 - 2026-03-25
+* Fix: ChatWidget breaking on some themes
 
 == 3.0.25 - 2026-03-24
 * Feature: Ability to regenerate images for AI Pages
