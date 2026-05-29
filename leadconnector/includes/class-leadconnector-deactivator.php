@@ -20,26 +20,43 @@
  * @package LeadConnector
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
- * Fired when the plugin is uninstalled.
- *
- * Consolidated here as the sole uninstall handler and added actual data deletion.
+ * Fired during plugin deactivation
  *
  * @link       https://www.leadconnectorhq.com
  * @since      1.0.0
  *
  * @package    LeadConnector
+ * @subpackage LeadConnector/includes
  */
 
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	exit;
+/**
+ * Fired during plugin deactivation.
+ *
+ * This class defines all code necessary to run during the plugin's deactivation.
+ *
+ * @since      1.0.0
+ * @package    LeadConnector
+ * @subpackage LeadConnector/includes
+ */
+class LeadConnector_Deactivator {
+
+
+	/**
+	 * Short Description. (use period)
+	 *
+	 * Long Description.
+	 *
+	 * @since    1.0.0
+	 */
+	public static function deactivate() {
+		wp_clear_scheduled_hook( 'leadconnector_twicedaily_refresh_req_v2' );
+		wp_clear_scheduled_hook( 'leadconnector_twicedaily_refresh_req' );
+		wp_clear_scheduled_hook( 'lc_twicedaily_refresh_req_v2' );
+		wp_clear_scheduled_hook( 'lc_twicedaily_refresh_req' );
+	}
 }
-
-if ( file_exists( __DIR__ . '/config.php' ) ) {
-	require_once __DIR__ . '/config.php';
-}
-
-require_once __DIR__ . '/includes/class-leadconnector-constants.php';
-require_once __DIR__ . '/includes/class-leadconnector-uninstall.php';
-
-LeadConnector_Uninstall::run();

@@ -1,0 +1,70 @@
+/* Custom hero / about-us classes — blue dashed outline on hover */
+.hero-heading-class:hover,
+.hero-description-class:hover,
+.about-us-story-content-class:hover,
+.about-us-story-header-class:hover {
+  outline: 2px dashed #84adff !important;
+  outline-offset: 4px !important;
+  position: relative !important;
+  cursor: pointer !important;
+}
+
+/* Image widget containers — make relative so overlay can be positioned */
+.hero-image-class,
+.about-us-image-class {
+  position: relative !important;
+}
+
+.hero-image-class:hover,
+.about-us-image-class:hover {
+  cursor: pointer !important;
+}
+
+.hero-image-class img,
+.about-us-image-class img {
+  transition: filter 0.2s ease;
+}
+
+.hero-image-class:hover img,
+.about-us-image-class:hover img {
+  filter: blur(3px);
+}
+
+/* Regenerate Image overlay button */
+.leadconnector-regenerate-image-overlay {
+  position: absolute !important;
+  z-index: 9999 !important;
+  display: none;
+  align-items: center !important;
+  padding: 10px 20px !important;
+  background: #fff !important;
+  color: #1a1a1a !important;
+  border: none !important;
+  border-radius: 999px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15) !important;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease !important;
+  line-height: 1 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  min-height: auto !important;
+}
+
+.leadconnector-regenerate-image-overlay:hover {
+  transform: translate(-50%, -50%) scale(1.05) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+  background: #fff !important;
+  color: #1a1a1a !important;
+}
+
+.hero-image-class:hover .leadconnector-regenerate-image-overlay,
+.about-us-image-class:hover .leadconnector-regenerate-image-overlay {
+  display: flex;
+}
