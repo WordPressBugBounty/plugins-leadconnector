@@ -5,7 +5,7 @@ Tags: chat-widget, crm, funnels, forms, marketing-automation
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.0.32
+Stable tag: 3.0.33
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -320,6 +320,11 @@ When connected features are used, relevant account, location, site, funnel, widg
 5. View and manage published LeadConnector pages.
 
 == Changelog ==
+
+= 3.0.33 =
+**Fixed**
+
+* Fixed a compatibility issue where Custom Values could affect navigation menu item titles in Astra Theme and other WordPress themes.
 
 = 3.0.32 =
 **Security**

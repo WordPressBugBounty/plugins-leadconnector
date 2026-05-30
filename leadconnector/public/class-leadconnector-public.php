@@ -48,6 +48,7 @@ require_once __DIR__ . '/class-leadconnector-custom-value-string-replacable.php'
 class LeadConnector_Public {
 
 
+
 	/**
 	 * The ID of this plugin.
 	 *
@@ -100,7 +101,7 @@ class LeadConnector_Public {
 		add_filter( 'meta_description', array( $this, 'replace_custom_value_placeholders_in_text' ), 20 );
 
 		// Navigation.
-		add_filter( 'nav_menu_item_title', array( $this, 'replace_custom_value_placeholders_in_text' ), 20 );
+		add_filter( 'nav_menu_item_title', array( $this, 'replace_custom_value_placeholders' ), 20 );
 		add_filter( 'wp_nav_menu_items', array( $this, 'replace_custom_value_placeholders' ), 20 );
 
 		// Block-based Navigation.
@@ -458,46 +459,46 @@ class LeadConnector_Public {
 				);
 			} elseif ( isset( $options[ lead_connector_constants\LEADCONNECTOR_OPTIONS_SELECTED_CHAT_WIDGET_ID ] ) ) {
 
-					$widget_id = sanitize_text_field(
-						$options[ lead_connector_constants\LEADCONNECTOR_OPTIONS_SELECTED_CHAT_WIDGET_ID ]
-					);
+				$widget_id = sanitize_text_field(
+					$options[ lead_connector_constants\LEADCONNECTOR_OPTIONS_SELECTED_CHAT_WIDGET_ID ]
+				);
 
-					$widget_src      = defined( 'LEADCONNECTOR_CHAT_WIDGET_SRC' ) ? esc_url_raw( LEADCONNECTOR_CHAT_WIDGET_SRC ) : '';
-					$resources_url   = defined( 'LEADCONNECTOR_CHAT_WIDGET_RESOURCES_URL' ) ? esc_url_raw( LEADCONNECTOR_CHAT_WIDGET_RESOURCES_URL ) : '';
-					$server_url      = defined( 'LEADCONNECTOR_CHAT_WIDGET_SERVER_URL' ) ? esc_url_raw( LEADCONNECTOR_CHAT_WIDGET_SERVER_URL ) : '';
-					$marketplace_url = defined( 'LEADCONNECTOR_CHAT_WIDGET_MARKETPLACE_URL' ) ? esc_url_raw( LEADCONNECTOR_CHAT_WIDGET_MARKETPLACE_URL ) : '';
+				$widget_src      = defined( 'LEADCONNECTOR_CHAT_WIDGET_SRC' ) ? esc_url_raw( LEADCONNECTOR_CHAT_WIDGET_SRC ) : '';
+				$resources_url   = defined( 'LEADCONNECTOR_CHAT_WIDGET_RESOURCES_URL' ) ? esc_url_raw( LEADCONNECTOR_CHAT_WIDGET_RESOURCES_URL ) : '';
+				$server_url      = defined( 'LEADCONNECTOR_CHAT_WIDGET_SERVER_URL' ) ? esc_url_raw( LEADCONNECTOR_CHAT_WIDGET_SERVER_URL ) : '';
+				$marketplace_url = defined( 'LEADCONNECTOR_CHAT_WIDGET_MARKETPLACE_URL' ) ? esc_url_raw( LEADCONNECTOR_CHAT_WIDGET_MARKETPLACE_URL ) : '';
 
-					wp_enqueue_script(
-						'leadconnector-chat-widget',
-						$widget_src,
-						array(),
-						$this->version,
-						true
-					);
+				wp_enqueue_script(
+					'leadconnector-chat-widget',
+					$widget_src,
+					array(),
+					$this->version,
+					true
+				);
 
-					// Inject the required data-* attributes via script_loader_tag filter.
-					add_filter(
-						'script_loader_tag',
-						function ( $tag, $handle ) use ( $widget_id, $resources_url, $server_url, $marketplace_url ) {
-							if ( 'leadconnector-chat-widget' !== $handle ) {
-								return $tag;
-							}
-							// Replace only the first <script occurrence to avoid double-replacement.
-							return preg_replace(
-								'/(<script\b)/i',
-								'$1'
-								. ' data-resources-url="' . esc_attr( $resources_url ) . '"'
-								. ' data-widget-id="' . esc_attr( $widget_id ) . '"'
-								. ' data-server-u-r-l="' . esc_attr( $server_url ) . '"'
-								. ' data-marketplace-u-r-l="' . esc_attr( $marketplace_url ) . '"'
-								. ' data-no-optimize="1" data-no-minify="1"',
-								$tag,
-								1
-							);
-						},
-						10,
-						2
-					);
+				// Inject the required data-* attributes via script_loader_tag filter.
+				add_filter(
+					'script_loader_tag',
+					function ( $tag, $handle ) use ( $widget_id, $resources_url, $server_url, $marketplace_url ) {
+						if ( 'leadconnector-chat-widget' !== $handle ) {
+							return $tag;
+						}
+						// Replace only the first <script occurrence to avoid double-replacement.
+						return preg_replace(
+							'/(<script\b)/i',
+							'$1'
+							. ' data-resources-url="' . esc_attr( $resources_url ) . '"'
+							. ' data-widget-id="' . esc_attr( $widget_id ) . '"'
+							. ' data-server-u-r-l="' . esc_attr( $server_url ) . '"'
+							. ' data-marketplace-u-r-l="' . esc_attr( $marketplace_url ) . '"'
+							. ' data-no-optimize="1" data-no-minify="1"',
+							$tag,
+							1
+						);
+					},
+					10,
+					2
+				);
 			}
 		}
 	}
