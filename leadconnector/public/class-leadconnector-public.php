@@ -100,14 +100,8 @@ class LeadConnector_Public {
 		add_filter( 'get_the_excerpt', array( $this, 'replace_custom_value_placeholders' ), 20 );
 		add_filter( 'meta_description', array( $this, 'replace_custom_value_placeholders_in_text' ), 20 );
 
-		// Navigation.
-		add_filter( 'nav_menu_item_title', array( $this, 'replace_custom_value_placeholders' ), 20 );
-		add_filter( 'wp_nav_menu_items', array( $this, 'replace_custom_value_placeholders' ), 20 );
-
-		// Block-based Navigation.
-		add_filter( 'render_block_core/navigation', array( $this, 'replace_custom_value_placeholders' ), 20 );
-		add_filter( 'render_block_core/navigation-link', array( $this, 'replace_custom_value_placeholders' ), 20 );
-		add_filter( 'render_block_core/page-list', array( $this, 'replace_custom_value_placeholders' ), 20 );
+		// Block content (navigation blocks are intentionally excluded — see
+		// replace_custom_value_in_blocks()).
 		add_filter( 'render_block', array( $this, 'replace_custom_value_in_blocks' ), 20, 2 );
 
 		// Comments.
@@ -195,7 +189,7 @@ class LeadConnector_Public {
 	 *
 	 * Returns the fully-escaped string suitable for filters that render the
 	 * value as plain text (the_title, wp_title, document_title_parts,
-	 * widget_title, nav_menu_item_title, etc.). Both the surrounding content
+	 * widget_title, etc.). Both the surrounding content
 	 * and the substituted custom values are escaped together exactly once via
 	 * esc_html() — avoiding the double-encoding that would otherwise occur if
 	 * each substitution were pre-escaped and then the whole string escaped
@@ -335,6 +329,9 @@ class LeadConnector_Public {
 	 * `the_content` filter, so a placeholder typed into a Paragraph or
 	 * Heading block on the home page would otherwise never be substituted.
 	 *
+	 * Navigation blocks (`core/navigation*`, `core/page-list`) are excluded
+	 * because placeholder substitution in menu markup breaks theme navigation.
+	 *
 	 * Performance: a cheap substring check skips the regex pass entirely for
 	 * blocks that do not contain a placeholder, which is the vast majority of
 	 * blocks on a typical page.
@@ -344,7 +341,9 @@ class LeadConnector_Public {
 	 * @return string
 	 */
 	public function replace_custom_value_in_blocks( $block_content, $block ) {
-		unset( $block );
+		if ( $this->leadconnector_is_navigation_block( $block ) ) {
+			return $block_content;
+		}
 
 		if ( ! is_string( $block_content ) || '' === $block_content ) {
 			return $block_content;
@@ -355,6 +354,30 @@ class LeadConnector_Public {
 		}
 
 		return $this->replace_custom_value_placeholders( $block_content );
+	}
+
+	/**
+	 * Whether a rendered block belongs to WordPress navigation UI.
+	 *
+	 * Custom-value substitution is skipped for these blocks because themes
+	 * (e.g. Astra) and the block editor pass structured markup or non-scalar
+	 * titles through navigation filters; rewriting that output breaks menus.
+	 *
+	 * @param array $block Full block payload from the render_block filter.
+	 * @return bool
+	 */
+	private function leadconnector_is_navigation_block( $block ) {
+		if ( ! is_array( $block ) || empty( $block['blockName'] ) || ! is_string( $block['blockName'] ) ) {
+			return false;
+		}
+
+		$block_name = $block['blockName'];
+
+		if ( 0 === strpos( $block_name, 'core/navigation' ) ) {
+			return true;
+		}
+
+		return in_array( $block_name, array( 'core/page-list' ), true );
 	}
 
 	/**

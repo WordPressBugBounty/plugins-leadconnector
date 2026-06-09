@@ -5,7 +5,7 @@ Tags: chat-widget, crm, funnels, forms, marketing-automation
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.0.33
+Stable tag: 3.0.34
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -320,6 +320,12 @@ When connected features are used, relevant account, location, site, funnel, widg
 5. View and manage published LeadConnector pages.
 
 == Changelog ==
+
+= 3.0.34 =
+**Fixed**
+
+* Fixed an OAuth login redirect flaw where the connection was lost on the first page refresh after a successful "Connect with LeadConnector" handshake. AES-256-GCM ciphertext for the encrypted `oauth_access_token` / `oauth_refresh_token` options was being base64-encoded and base64-decoded exclusively through `sodium_bin2base64()` / `sodium_base642bin()`, so on hosts where the `libsodium` PHP extension is not loaded for the web SAPI `LeadConnector_Data_Encryption::encrypt()` returned `false` and `decrypt_gcm()` / `decrypt_legacy_ctr()` silently failed. The plugin then reported `is_connection_status_active: false` / `has_access_token: false` and fell back to the legacy API-key path, which produced a 404 against the LeadConnector API. The data-encryption class now routes the at-rest base64 layer through new `encode_binary_base64()` / `decode_binary_base64()` helpers that prefer libsodium when available but transparently fall back to PHP core's `base64_encode()` / `base64_decode()` (wire-compatible with `SODIUM_BASE64_VARIANT_ORIGINAL`), so OAuth ciphertext can be written and read on any environment that has OpenSSL — `libsodium` is now an optional optimization rather than a hard requirement.
+* Funnel / API base64 payload decoding hardened against the same missing-extension failure mode. `leadconnector_decode_stored_json()` and `leadconnector_decode_api_base64_payload()` in `trunk/includes/leadconnector-functions.php` now share a single `leadconnector_decode_base64_payload()` helper that uses `sodium_base642bin()` when the extension is loaded and falls back to a strict-then-non-strict `base64_decode()` otherwise. This keeps stored funnel JSON and remote API payloads readable on hosts that ship OpenSSL but not `ext-sodium`.
 
 = 3.0.33 =
 **Fixed**

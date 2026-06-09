@@ -37,6 +37,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  * WordPress salts that derive the key are missing, so a misconfigured site
  * can never silently persist plaintext credentials.
  *
+ * The libsodium PHP extension is optional: when it is not loaded the class
+ * falls back to PHP's base64_encode()/base64_decode(), which is wire-compatible
+ * with ciphertext produced via sodium_bin2base64( ..., ORIGINAL ).
+ *
  * @package LeadConnector
  */
 class LeadConnector_Data_Encryption {
@@ -167,11 +171,12 @@ class LeadConnector_Data_Encryption {
 		}
 
 		$payload = $iv . $tag . $ciphertext;
-		if ( ! function_exists( 'sodium_bin2base64' ) ) {
+		$encoded = $this->encode_binary_base64( $payload );
+		if ( '' === $encoded ) {
 			return false;
 		}
 
-		return self::LEADCONNECTOR_GCM_MAGIC . sodium_bin2base64( $payload, SODIUM_BASE64_VARIANT_ORIGINAL );
+		return self::LEADCONNECTOR_GCM_MAGIC . $encoded;
 	}
 
 	/**
@@ -220,15 +225,7 @@ class LeadConnector_Data_Encryption {
 	 * @return string|false
 	 */
 	private function decrypt_gcm( $b64 ) {
-		if ( ! function_exists( 'sodium_base642bin' ) ) {
-			return false;
-		}
-
-		try {
-			$raw = sodium_base642bin( $b64, SODIUM_BASE64_VARIANT_ORIGINAL, true );
-		} catch ( Exception $e ) {
-			return false;
-		}
+		$raw = $this->decode_binary_base64( $b64 );
 		if ( false === $raw || '' === $raw ) {
 			return false;
 		}
@@ -267,21 +264,13 @@ class LeadConnector_Data_Encryption {
 	 * @return string|false
 	 */
 	private function decrypt_legacy_ctr( $raw_value ) {
-		if ( ! function_exists( 'sodium_base642bin' ) ) {
-			return false;
-		}
-
 		$method = 'aes-256-ctr';
 		$iv_len = openssl_cipher_iv_length( $method );
 		if ( false === $iv_len ) {
 			return false;
 		}
 
-		try {
-			$raw = sodium_base642bin( $raw_value, SODIUM_BASE64_VARIANT_ORIGINAL, true );
-		} catch ( Exception $e ) {
-			return false;
-		}
+		$raw = $this->decode_binary_base64( $raw_value );
 		if ( false === $raw || strlen( $raw ) <= $iv_len ) {
 			return false;
 		}
@@ -303,5 +292,56 @@ class LeadConnector_Data_Encryption {
 		}
 
 		return substr( $value, 0, -$salt_len );
+	}
+
+	/**
+	 * Base64-encode a binary blob for at-rest storage.
+	 *
+	 * Prefers libsodium's ORIGINAL variant; falls back to PHP base64_encode()
+	 * so hosts that ship OpenSSL but not ext-sodium can still read/write GCM
+	 * ciphertext interchangeably.
+	 *
+	 * @param string $binary Raw bytes.
+	 * @return string Base64 text, or empty string on failure.
+	 */
+	private function encode_binary_base64( $binary ) {
+		if ( ! is_string( $binary ) || '' === $binary ) {
+			return '';
+		}
+
+		if ( function_exists( 'sodium_bin2base64' ) ) {
+			return sodium_bin2base64( $binary, SODIUM_BASE64_VARIANT_ORIGINAL );
+		}
+
+		return base64_encode( $binary );
+	}
+
+	/**
+	 * Base64-decode a stored blob back to raw bytes.
+	 *
+	 * @param string $b64 Base64 text (no magic prefix).
+	 * @return string|false Raw bytes, or false on failure.
+	 */
+	private function decode_binary_base64( $b64 ) {
+		if ( ! is_string( $b64 ) || '' === $b64 ) {
+			return false;
+		}
+
+		if ( function_exists( 'sodium_base642bin' ) ) {
+			try {
+				return sodium_base642bin( $b64, SODIUM_BASE64_VARIANT_ORIGINAL, true );
+			} catch ( Exception $e ) {
+				// Fall through to PHP's decoder below.
+			}
+		}
+
+		$decoded = base64_decode( $b64, true );
+		if ( false === $decoded || '' === $decoded ) {
+			// Some legacy rows may have been written with non-strict padding;
+			// retry once without strict mode before giving up.
+			$decoded = base64_decode( $b64, false );
+		}
+
+		return ( false === $decoded || '' === $decoded ) ? false : $decoded;
 	}
 }

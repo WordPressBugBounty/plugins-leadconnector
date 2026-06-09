@@ -43,13 +43,11 @@ function leadconnector_decode_stored_json( $stored ) {
 		return $decoded;
 	}
 
-	if ( function_exists( 'sodium_base642bin' ) ) {
-		$binary = sodium_base642bin( $stored, SODIUM_BASE64_VARIANT_ORIGINAL, true );
-		if ( false !== $binary ) {
-			$decoded = json_decode( $binary );
-			if ( is_object( $decoded ) ) {
-				return $decoded;
-			}
+	$binary = leadconnector_decode_base64_payload( $stored );
+	if ( false !== $binary ) {
+		$decoded = json_decode( $binary );
+		if ( is_object( $decoded ) ) {
+			return $decoded;
 		}
 	}
 
@@ -67,14 +65,37 @@ function leadconnector_decode_api_base64_payload( $payload ) {
 		return '';
 	}
 
+	$decoded = leadconnector_decode_base64_payload( $payload );
+	return false === $decoded ? '' : $decoded;
+}
+
+/**
+ * Decode a base64 payload using libsodium when available, otherwise PHP core.
+ *
+ * Wire-compatible with sodium_bin2base64( ..., SODIUM_BASE64_VARIANT_ORIGINAL ).
+ *
+ * @param string $payload Base64-encoded payload.
+ * @return string|false Raw bytes, or false on failure.
+ */
+function leadconnector_decode_base64_payload( $payload ) {
+	if ( ! is_string( $payload ) || '' === $payload ) {
+		return false;
+	}
+
 	if ( function_exists( 'sodium_base642bin' ) ) {
-		$decoded = sodium_base642bin( $payload, SODIUM_BASE64_VARIANT_ORIGINAL, true );
-		if ( false !== $decoded ) {
-			return $decoded;
+		try {
+			return sodium_base642bin( $payload, SODIUM_BASE64_VARIANT_ORIGINAL, true );
+		} catch ( Exception $e ) {
+			// Fall through to PHP's decoder below.
 		}
 	}
 
-	return '';
+	$decoded = base64_decode( $payload, true );
+	if ( false === $decoded || '' === $decoded ) {
+		$decoded = base64_decode( $payload, false );
+	}
+
+	return ( false === $decoded || '' === $decoded ) ? false : $decoded;
 }
 
 /**
