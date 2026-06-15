@@ -1,11 +1,11 @@
 === LeadConnector ===
-Contributors: varunvairavanlc, pranoylc, alphaenigma, iamnfinitylc, hemantlc, raahatsharma
+Contributors: varunvairavanlc, pranoylc, alphaenigma, iamnfinitylc, hemantlc, raahatsharma, paraglc, 
 Plugin URI: https://www.leadconnectorhq.com/
 Tags: chat-widget, crm, funnels, forms, marketing-automation
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.0.34
+Stable tag: 4.0.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -321,6 +321,21 @@ When connected features are used, relevant account, location, site, funnel, widg
 
 == Changelog ==
 
+= 4.0.0 =
+**Added**
+
+* Added a **Send feedback** button to the logged-in LeadConnector admin header. It opens the WordPress plugin support portal at `https://wordpress.leadconnectorhq.com/pg/support` in a new browser tab so site owners can submit feedback or report issues without leaving wp-admin.
+* Added a support link on the pre-connection auth wall (bottom-left footer) that points to the same support portal for users who have not connected their account yet.
+
+**Changed**
+
+* Refreshed the connected-state admin header layout: the connection status badge and overflow menu are aligned to a consistent 32px control height, and feedback actions are surfaced as a dedicated header button instead of burying support inside the overflow menu or dashboard copy.
+* Improved full-page admin layout on connected screens so short tabs (for example Calendar or Chat Widget) fill the viewport with a white background instead of exposing the default WordPress admin grey footer band; auth-wall scroll locking remains scoped to the login screen only.
+
+**Fixed**
+
+* Custom value placeholder substitution in title and plain-text filters no longer runs `esc_html()` across the entire returned string. Each substituted custom value is escaped individually while surrounding content is left untouched, preventing double-encoding and restoring compatibility with multilingual and third-party plugins (for example WPML) that legitimately inject markup into title filters.
+
 = 3.0.34 =
 **Fixed**
 
@@ -536,6 +551,9 @@ When connected features are used, relevant account, location, site, funnel, widg
 * Fix: Improved cron job scheduling.
 
 == Upgrade Notice ==
+
+= 4.0.0 =
+Major admin experience update: adds in-header **Send feedback** support links (auth wall + connected admin), polishes connected-screen layout/background handling, and fixes custom-value title substitution so multilingual plugins are not broken by whole-string escaping. Safe to upgrade.
 
 = 3.0.32 =
 Security and compliance release: removes auth-cookie hand-off, hardens native funnel rendering with host allowlists/CSP/CSS sanitization, documents external services and native-mode trust boundaries, and keeps 3.0.31 secret-redaction and WP.org fixes.

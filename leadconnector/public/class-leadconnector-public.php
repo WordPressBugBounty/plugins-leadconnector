@@ -49,6 +49,7 @@ class LeadConnector_Public {
 
 
 
+
 	/**
 	 * The ID of this plugin.
 	 *
@@ -185,26 +186,18 @@ class LeadConnector_Public {
 	}
 
 	/**
-	 * Replace custom value placeholders in plain-text filter callbacks.
+	 * Replace custom value placeholders in title / plain-text filter callbacks.
 	 *
-	 * Returns the fully-escaped string suitable for filters that render the
-	 * value as plain text (the_title, wp_title, document_title_parts,
-	 * widget_title, etc.). Both the surrounding content
-	 * and the substituted custom values are escaped together exactly once via
-	 * esc_html() — avoiding the double-encoding that would otherwise occur if
-	 * each substitution were pre-escaped and then the whole string escaped
-	 * again.
+	 * Each substituted custom value is individually escaped with esc_html()
+	 * while the surrounding content is left untouched. This prevents
+	 * double-encoding of already-safe markup and avoids breaking third-party
+	 * plugins (e.g. WPML) that legitimately inject HTML into title filters.
 	 *
 	 * @param mixed $content The content to process.
-	 * @return mixed Escaped text content with placeholders replaced.
+	 * @return mixed Content with placeholders replaced (values escaped).
 	 */
 	public function replace_custom_value_placeholders_in_text( $content ) {
-		$replaced = $this->replace_custom_value_placeholders_internal( $content, false );
-		if ( ! is_string( $replaced ) ) {
-			return $replaced;
-		}
-
-		return esc_html( $replaced );
+		return $this->replace_custom_value_placeholders_internal( $content, true );
 	}
 
 	/**

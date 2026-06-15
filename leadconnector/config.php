@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'LEAD_CONNECTOR_VERSION' ) ) {
-	define( 'LEAD_CONNECTOR_VERSION', '3.0.34' );
+	define( 'LEAD_CONNECTOR_VERSION', '4.0.0' );
 }
 if ( ! defined( 'LEAD_CONNECTOR_PLUGIN_NAME' ) ) {
 	define( 'LEAD_CONNECTOR_PLUGIN_NAME', 'LeadConnector' );
