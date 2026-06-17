@@ -191,4 +191,87 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::success( "Template {$template_id} imported successfully into page {$page_id}." );
 		}
 	);
+
+	/**
+	 * Updates a page's Elementor data from a JSON file on the server.
+	 *
+	 * Bypasses WP-CLI argument length limits for large _elementor_data payloads.
+	 * Used by AI page customization (colors, content, images).
+	 *
+	 * Usage:
+	 *   wp leadconnector elementor-template-update --page_id=1500 --file=/path/to/update.json
+	 */
+	WP_CLI::add_command(
+		'leadconnector elementor-template-update',
+		function ( $args, $assoc_args ) {
+			$page_id   = isset( $assoc_args['page_id'] ) ? intval( $assoc_args['page_id'] ) : 0;
+			$file_path = isset( $assoc_args['file'] ) ? $assoc_args['file'] : '';
+
+			if ( ! $page_id || ! $file_path ) {
+				WP_CLI::error( 'Both --page_id and --file are required.' );
+			}
+
+			if ( ! class_exists( 'Elementor\Plugin' ) ) {
+				WP_CLI::error( 'Elementor plugin is not active.' );
+			}
+
+			$target_post = get_post( $page_id );
+			if ( ! $target_post || 'page' !== $target_post->post_type ) {
+				WP_CLI::error( "Page ID {$page_id} is not a valid WordPress page." );
+			}
+
+			if ( ! file_exists( $file_path ) ) {
+				WP_CLI::error( "File not found: {$file_path}" );
+			}
+
+			global $wp_filesystem;
+			if ( empty( $wp_filesystem ) ) {
+				require_once ABSPATH . 'wp-admin/includes/file.php';
+				WP_Filesystem();
+			}
+
+			if ( empty( $wp_filesystem ) ) {
+				WP_CLI::error( 'Unable to initialize filesystem.' );
+			}
+
+			$json_content = $wp_filesystem->get_contents( $file_path );
+			if ( false === $json_content ) {
+				WP_CLI::error( "Failed to read file: {$file_path}" );
+			}
+
+			$decoded = json_decode( $json_content, true );
+			if ( JSON_ERROR_NONE !== json_last_error() ) {
+				WP_CLI::error( 'Invalid JSON in file: ' . json_last_error_msg() );
+			}
+
+			$content_array  = isset( $decoded['content'] ) ? $decoded['content'] : $decoded;
+			$elementor_json = wp_json_encode( $content_array );
+			update_post_meta( $page_id, '_elementor_data', wp_slash( $elementor_json ) );
+
+			if ( isset( $decoded['page_settings'] ) && ! empty( $decoded['page_settings'] ) ) {
+				update_post_meta( $page_id, '_elementor_page_settings', $decoded['page_settings'] );
+			}
+
+			update_post_meta( $page_id, '_elementor_edit_mode', 'builder' );
+			update_post_meta( $page_id, '_wp_page_template', 'elementor_theme' );
+
+			if ( method_exists( '\Elementor\Plugin', 'instance' ) ) {
+				$elementor = \Elementor\Plugin::instance();
+				if ( method_exists( $elementor, 'files_manager' ) ) {
+					$elementor->files_manager->clear_cache();
+				}
+
+				if ( class_exists( '\Elementor\Core\Files\CSS\Post' ) ) {
+					$post_css = new \Elementor\Core\Files\CSS\Post( $page_id );
+					$post_css->update();
+				}
+			}
+
+			if ( file_exists( $file_path ) ) {
+				wp_delete_file( $file_path );
+			}
+
+			WP_CLI::success( "Elementor data updated on page {$page_id}." );
+		}
+	);
 }

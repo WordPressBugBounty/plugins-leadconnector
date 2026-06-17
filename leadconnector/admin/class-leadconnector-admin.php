@@ -151,6 +151,7 @@ class LeadConnector_Admin {
 		// loopback `wp_remote_post()` pattern that copied WordPress auth
 		// cookies into a plugin-generated HTTP request.
 		add_action( 'leadconnector_save_custom_values_event', array( $this, 'leadconnector_handle_save_custom_values_event' ), 10, 1 );
+		add_action( 'leadconnector_sync_ai_page_wp_deleted_event', array( $this, 'leadconnector_handle_sync_ai_page_wp_deleted_event' ), 10, 1 );
 	}
 
 
@@ -3842,6 +3843,86 @@ class LeadConnector_Admin {
 			)
 		);
 		update_option( self::LEADCONNECTOR_NATIVE_FUNNEL_INDEX_OPTION, $index, false );
+	}
+
+	/**
+	 * Schedule a deferred sync when a page post is trashed or deleted in WP Admin.
+	 *
+	 * @since 3.0.35
+	 * @param int $post_id Post ID being removed.
+	 * @return void
+	 */
+	public function schedule_sync_ai_page_deleted_from_wp( $post_id ) {
+		$post_id = (int) $post_id;
+		if ( $post_id <= 0 ) {
+			return;
+		}
+
+		if ( 'page' !== get_post_type( $post_id ) ) {
+			return;
+		}
+
+		$args = array( $post_id );
+		if ( false === wp_next_scheduled( 'leadconnector_sync_ai_page_wp_deleted_event', $args ) ) {
+			wp_schedule_single_event( time(), 'leadconnector_sync_ai_page_wp_deleted_event', $args );
+		}
+	}
+
+	/**
+	 * WP-Cron: notify LeadConnector services that a WP page was deleted in WP Admin.
+	 *
+	 * @since 3.0.35
+	 * @param int $wp_page_id WordPress page post ID.
+	 * @return void
+	 */
+	public function leadconnector_handle_sync_ai_page_wp_deleted_event( $wp_page_id ) {
+		$wp_page_id = (int) $wp_page_id;
+		if ( $wp_page_id <= 0 ) {
+			return;
+		}
+
+		$leadconnector_options = get_option( LEAD_CONNECTOR_OPTION_NAME );
+		if ( empty( $leadconnector_options ) || ! is_array( $leadconnector_options ) ) {
+			return;
+		}
+
+		$location_id = isset( $leadconnector_options[ lead_connector_constants\LEADCONNECTOR_OPTIONS_LOCATION_ID ] )
+			? trim( (string) $leadconnector_options[ lead_connector_constants\LEADCONNECTOR_OPTIONS_LOCATION_ID ] )
+			: '';
+		if ( '' === $location_id || 'leadconnector_disconnect' === $location_id ) {
+			return;
+		}
+
+		$wp_id = $this->get_cdn_wp_id();
+		if ( '' === $wp_id ) {
+			return;
+		}
+
+		$endpoint = sprintf(
+			'wordpress/ai-pages/%s/site/%s/sync-wp-delete',
+			rawurlencode( $location_id ),
+			rawurlencode( $wp_id )
+		);
+
+		$response = $this->leadconnector_oauth_wp_remote_v2(
+			'post',
+			$endpoint,
+			array(
+				'wpPageId' => (string) $wp_page_id,
+			)
+		);
+
+		if ( ! empty( $response['error'] ) ) {
+			LeadConnector_Logger::get_instance()->warning(
+				'leadconnector_sync_ai_page_wp_deleted.failed',
+				array(
+					'wp_page_id'  => $wp_page_id,
+					'http_code'  => isset( $response['http_code'] ) ? (int) $response['http_code'] : null,
+					'location_id' => $location_id,
+					'wp_id'       => $wp_id,
+				)
+			);
+		}
 	}
 
 	/**
