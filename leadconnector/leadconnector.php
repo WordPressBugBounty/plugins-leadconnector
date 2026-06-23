@@ -16,7 +16,7 @@
  * Plugin Name:       LeadConnector
  * Plugin URI:        https://www.leadconnectorhq.com/
  * Description:       This plugin helps you to add the lead connector widgets to your website.
- * Version:           4.0.1
+ * Version:           4.0.2
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            LeadConnector

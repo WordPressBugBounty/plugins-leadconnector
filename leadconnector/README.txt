@@ -1,11 +1,11 @@
 === LeadConnector ===
-Contributors: varunvairavanlc, pranoylc, alphaenigma, iamnfinitylc, hemantlc, raahatsharma, paraglc, 
+Contributors: varunvairavanlc, pranoylc, alphaenigma, iamnfinitylc, hemantlc, raahatsharma, paraglc
 Plugin URI: https://www.leadconnectorhq.com/
 Tags: chat-widget, crm, funnels, forms, marketing-automation
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.0.1
+Stable tag: 4.0.2
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -320,6 +320,16 @@ When connected features are used, relevant account, location, site, funnel, widg
 5. View and manage published LeadConnector pages.
 
 == Changelog ==
+
+= 4.0.2 =
+**Added**
+
+* Added **Rocket.net**, **HighLevel**, and **LeadConnector** as selectable options in the hosting provider dropdown on the support request form so site owners can identify their hosting environment more accurately when reporting an issue.
+
+**Changed**
+
+* Renamed the **Send feedback** header button to **Support** and replaced its chat-bubble icon with a headset icon for clearer intent.
+* Repositioned the **Submit feedback or report an issue** link on the pre-connection auth wall from the bottom-left footer to the top-right of the white panel, added a matching headset icon, and restyled it as an outlined button so it visually pairs with the connected-state **Support** button.
 
 = 4.0.1 =
 **Improved**
