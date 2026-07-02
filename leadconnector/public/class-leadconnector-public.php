@@ -171,25 +171,43 @@ class LeadConnector_Public {
 	}
 
 	/**
+	 * Output context: the substituted value will be rendered as HTML markup
+	 * (e.g. the_content, widget_text, render_block, comment_text).
+	 */
+	private const CUSTOM_VALUE_CONTEXT_HTML = 'html';
+
+	/**
+	 * Output context: the substituted value will be rendered as plain text
+	 * (e.g. the_title, wp_title, document_title_parts, meta_description).
+	 */
+	private const CUSTOM_VALUE_CONTEXT_TEXT = 'text';
+
+	/**
 	 * Replace {{custom_values.*}} placeholders for HTML output contexts.
 	 *
-	 * Each substituted value is individually escaped with esc_html() so it is
-	 * safe to render inside HTML markup (e.g. the_content, widget_text). The
-	 * surrounding content is left untouched — this method is intended for
-	 * filters whose return value is rendered as HTML.
+	 * Each substituted value is individually escaped before being spliced
+	 * back into the content, so it is safe to render inside HTML markup
+	 * (e.g. the_content, widget_text). Values that contain HTML markup are
+	 * passed through wp_kses() with the "post" allowed-tag list (filterable
+	 * via `leadconnector_custom_value_allowed_html`); values that do not
+	 * contain markup are escaped with esc_html() as before. The surrounding
+	 * content is left untouched — this method is intended for filters whose
+	 * return value is rendered as HTML.
 	 *
 	 * @param mixed $content The content to process.
 	 * @return mixed Content with placeholders replaced.
 	 */
 	public function replace_custom_value_placeholders( $content ) {
-		return $this->replace_custom_value_placeholders_internal( $content, true );
+		return $this->replace_custom_value_placeholders_internal( $content, self::CUSTOM_VALUE_CONTEXT_HTML );
 	}
 
 	/**
 	 * Replace custom value placeholders in title / plain-text filter callbacks.
 	 *
-	 * Each substituted custom value is individually escaped with esc_html()
-	 * while the surrounding content is left untouched. This prevents
+	 * Each substituted custom value is stripped of any HTML tags and then
+	 * escaped with esc_html() so titles and meta descriptions render as
+	 * clean plain text even when a customer has stored HTML markup in the
+	 * value. The surrounding content is left untouched, which prevents
 	 * double-encoding of already-safe markup and avoids breaking third-party
 	 * plugins (e.g. WPML) that legitimately inject HTML into title filters.
 	 *
@@ -197,22 +215,23 @@ class LeadConnector_Public {
 	 * @return mixed Content with placeholders replaced (values escaped).
 	 */
 	public function replace_custom_value_placeholders_in_text( $content ) {
-		return $this->replace_custom_value_placeholders_internal( $content, true );
+		return $this->replace_custom_value_placeholders_internal( $content, self::CUSTOM_VALUE_CONTEXT_TEXT );
 	}
 
 	/**
 	 * Shared placeholder substitution used by both the HTML- and text-context
 	 * public wrappers.
 	 *
-	 * @param mixed $content              The content to process.
-	 * @param bool  $escape_substitutions Whether to esc_html() each substituted
-	 *                                    value individually. Pass true for HTML
-	 *                                    output contexts and false when the
-	 *                                    caller will escape the full result.
-	 * @return mixed Content with placeholders replaced (substitutions
-	 *               conditionally escaped per $escape_substitutions).
+	 * @param mixed  $content The content to process.
+	 * @param string $context Output context for the substituted values. One
+	 *                        of self::CUSTOM_VALUE_CONTEXT_HTML (rendered as
+	 *                        HTML — HTML markup allowed via wp_kses) or
+	 *                        self::CUSTOM_VALUE_CONTEXT_TEXT (rendered as
+	 *                        plain text — HTML markup stripped).
+	 * @return mixed Content with placeholders replaced and each substituted
+	 *               value escaped according to $context.
 	 */
-	private function replace_custom_value_placeholders_internal( $content, $escape_substitutions ) {
+	private function replace_custom_value_placeholders_internal( $content, $context ) {
 		$sanitized_content = $this->sanitize_content( $content );
 		if ( ! $sanitized_content->is_valid() ) {
 			return $content;
@@ -240,7 +259,7 @@ class LeadConnector_Public {
 		try {
 			return preg_replace_callback(
 				'/\{\{\s*custom_values\.(\w+)\s*\}\}/',
-				function ( $matches ) use ( $custom_values, $escape_substitutions ) {
+				function ( $matches ) use ( $custom_values, $context ) {
 					$field_key = trim( $matches[1] );
 					if ( empty( $field_key ) ) {
 						return '';
@@ -251,8 +270,7 @@ class LeadConnector_Public {
 						return '';
 					}
 
-					$value = (string) $value;
-					return $escape_substitutions ? esc_html( $value ) : $value;
+					return $this->escape_custom_value( (string) $value, $context );
 				},
 				$content_string
 			);
@@ -262,6 +280,85 @@ class LeadConnector_Public {
 			);
 			return $content;
 		}
+	}
+
+	/**
+	 * Escape a resolved custom value for output.
+	 *
+	 * Some customers store HTML markup inside custom values in the
+	 * LeadConnector CRM (for example a formatted signature or a small
+	 * promotional block). Historically we always escaped substitutions with
+	 * esc_html(), which caused that markup to render as visible tag text
+	 * rather than styled HTML. When the substituted value contains HTML
+	 * markup and it is being rendered into an HTML output context, we
+	 * instead pass it through wp_kses() with the "post" allowed-tag list so
+	 * safe markup renders while script/style/on* attributes and other
+	 * unsafe constructs are stripped. Plain-text substitutions and any
+	 * placeholder rendered into a plain-text context (titles, meta
+	 * descriptions) continue to be treated as text.
+	 *
+	 * @param string $value   The resolved custom value.
+	 * @param string $context One of self::CUSTOM_VALUE_CONTEXT_HTML or
+	 *                        self::CUSTOM_VALUE_CONTEXT_TEXT.
+	 * @return string Escaped value suitable for output in $context.
+	 */
+	private function escape_custom_value( $value, $context ) {
+		if ( self::CUSTOM_VALUE_CONTEXT_TEXT === $context ) {
+			// Titles and meta descriptions must always render as plain
+			// text — strip any markup first so a customer's HTML snippet
+			// does not surface as visible tag text.
+			return esc_html( wp_strip_all_tags( $value ) );
+		}
+
+		if ( ! $this->custom_value_contains_html( $value ) ) {
+			return esc_html( $value );
+		}
+
+		/**
+		 * Filters the allowed HTML tags used when substituting a custom value
+		 * that contains HTML markup into an HTML output context.
+		 *
+		 * Defaults to the "post" list returned by wp_kses_allowed_html(),
+		 * which mirrors what wp_kses_post() permits inside post_content.
+		 * Return an array in the shape accepted by wp_kses() to restrict or
+		 * expand the tags/attributes available to custom-value placeholders.
+		 *
+		 * @since 4.0.3
+		 *
+		 * @param array  $allowed_html Allowed HTML tags and attributes.
+		 * @param string $value        The raw custom-value string being processed.
+		 */
+		$allowed_html = apply_filters(
+			'leadconnector_custom_value_allowed_html',
+			wp_kses_allowed_html( 'post' ),
+			$value
+		);
+
+		if ( ! is_array( $allowed_html ) ) {
+			$allowed_html = wp_kses_allowed_html( 'post' );
+		}
+
+		return wp_kses( $value, $allowed_html );
+	}
+
+	/**
+	 * Whether a resolved custom value contains HTML markup.
+	 *
+	 * Uses a cheap character-presence pre-check before falling back to
+	 * wp_strip_all_tags() so the common case (plain-text values) short
+	 * circuits without allocating. wp_strip_all_tags() only removes strings
+	 * that match its HTML tag pattern, so stray angle brackets in prose
+	 * (for example "5 < 10") are correctly reported as non-HTML.
+	 *
+	 * @param string $value The resolved custom value.
+	 * @return bool True when the value contains at least one HTML tag.
+	 */
+	private function custom_value_contains_html( $value ) {
+		if ( false === strpos( $value, '<' ) || false === strpos( $value, '>' ) ) {
+			return false;
+		}
+
+		return $value !== wp_strip_all_tags( $value );
 	}
 
 	/**

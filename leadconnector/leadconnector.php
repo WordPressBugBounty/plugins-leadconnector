@@ -16,7 +16,7 @@
  * Plugin Name:       LeadConnector
  * Plugin URI:        https://www.leadconnectorhq.com/
  * Description:       This plugin helps you to add the lead connector widgets to your website.
- * Version:           4.0.2
+ * Version:           4.0.3
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            LeadConnector
@@ -96,9 +96,11 @@ register_deactivation_hook( __FILE__, 'leadconnector_deactivate' );
  */
 require plugin_dir_path( __FILE__ ) . 'includes/class-leadconnector.php';
 require plugin_dir_path( __FILE__ ) . 'includes/class-leadconnector-update-functions.php';
+require plugin_dir_path( __FILE__ ) . 'includes/class-leadconnector-ai-page-preview.php';
 
 // Add Elementor CLI.
 require plugin_dir_path( __FILE__ ) . 'includes/class-leadconnector-elementor-cli.php';
+require plugin_dir_path( __FILE__ ) . 'includes/class-leadconnector-preview-cli.php';
 require plugin_dir_path( __FILE__ ) . 'includes/SeoOverrides/class-leadconnector-seo-overrides.php';
 
 /**

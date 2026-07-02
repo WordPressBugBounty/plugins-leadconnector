@@ -5,7 +5,7 @@ Tags: chat-widget, crm, funnels, forms, marketing-automation
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.0.2
+Stable tag: 4.0.3
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -320,6 +320,17 @@ When connected features are used, relevant account, location, site, funnel, widg
 5. View and manage published LeadConnector pages.
 
 == Changelog ==
+
+= 4.0.3 =
+**Added**
+
+* Added support for AI pages in Draft mode.
+* Draft AI pages can be previewed in the platform before going live.
+* Publish or unpublish changes in WordPress Admin now stay in sync with the platform dashboard.
+
+**Improved**
+
+* Custom values with HTML formatting (links, bold text, etc.) now display correctly on your site instead of showing raw markup.
 
 = 4.0.2 =
 **Added**

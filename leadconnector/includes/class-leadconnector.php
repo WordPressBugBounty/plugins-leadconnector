@@ -189,6 +189,7 @@ class LeadConnector {
 		$this->loader->add_action( 'before_delete_post', $plugin_admin, 'sync_native_funnel_index_on_delete', 10, 1 );
 		$this->loader->add_action( 'before_delete_post', $plugin_admin, 'schedule_sync_ai_page_deleted_from_wp', 10, 1 );
 		$this->loader->add_action( 'wp_trash_post', $plugin_admin, 'schedule_sync_ai_page_deleted_from_wp', 10, 1 );
+		$this->loader->add_action( 'transition_post_status', $plugin_admin, 'schedule_sync_ai_page_status_from_wp', 10, 3 );
 		$this->loader->add_action( 'added_post_meta', $plugin_admin, 'sync_native_funnel_index_on_meta_change', 10, 4 );
 		$this->loader->add_action( 'updated_post_meta', $plugin_admin, 'sync_native_funnel_index_on_meta_change', 10, 4 );
 		$this->loader->add_action( 'deleted_post_meta', $plugin_admin, 'sync_native_funnel_index_on_meta_change', 10, 4 );
